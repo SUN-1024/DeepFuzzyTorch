@@ -2741,7 +2741,7 @@ def run_track5_multi_fm_hesitant_and_pythagorean_tta(wsi_dir: str) -> Dict[str, 
       - Dataset A: Camelyon17 (N=2,500 histopathology patches across 5 hospitals; Source: Hospitals 0,1,2 n=1,500 -> Target OOD: Hospitals 3 & 4 n=1,000)
       - Dataset B: NCT-CRC (N=2,349 colorectal histopathology tiles; Source: NCT_CRC_HE_Discovery n=999 -> Target OOD: CRC_VAL_HE_7K_External n=1,350, C10)
       - Strictly in-fold 64-component PCA on full FM embeddings (no arbitrary first-64 raw slicing).
-      - Genuine Adam optimization of `HesitantFuzzyAggregator` (`BCE + 0.25*Brier`) strictly on source OOF predictions.
+      - Genuine Adam optimization of `HesitantFuzzyAggregator` (`BCE + 0.25*Brier + 0.25*Softplus(tau)^2 + 0.05*||alpha-alpha0||^2/P`) strictly on source OOF predictions.
       - Includes `MedianPool6FMs` and `Tent_TTA` (Wang et al., ICLR 2021 Shannon entropy minimization) baselines + BH-FDR.
       - Strictly zero test-label selection (`BestSingleFM` selected on source CV, zero `max` over test AUROC, C9).
     """
@@ -2825,7 +2825,7 @@ def run_track5_multi_fm_hesitant_and_pythagorean_tta(wsi_dir: str) -> Dict[str, 
         median_pool_p = np.median(te_mat, axis=1).astype(np.float32)
         median_pool_auroc = float(compute_binary_metrics(median_pool_p, y_te)["auroc"])
 
-        # Train Block 2: HesitantFuzzyAggregator strictly on source OOF predictions via Adam (BCE + 0.25*Brier)
+        # Train Block 2: HesitantFuzzyAggregator strictly on source OOF predictions via Adam (4-term regularized BCE/Brier objective)
         set_all_seeds(42)
         hfs_agg = HesitantFuzzyAggregator(num_sources=K, concordance_kappa=2.6)
         au_arr = np.asarray(src_cv_aurocs, dtype=np.float32)

@@ -1,6 +1,6 @@
 {
   "file": "paper/manuscript_Information_Fusion.tex",
-  "line_count": 2703,
+  "line_count": 2705,
   "sentence_word_limit": 95,
   "source_line_char_limit": 95,
   "max_source_line_chars": 95,
@@ -43,7 +43,7 @@
   "overlong_sentences_top10": [],
   "companion_manuscripts": {
     "paper/manuscript_Information_Fusion.tex": {
-      "lines": 2703,
+      "lines": 2705,
       "max_sentence_words": 95,
       "max_sentence_words_incl_math": 134,
       "overlong_gt_95": 0,
@@ -51,7 +51,7 @@
       "overlong_source_line_gt_95_chars": 0
     },
     "paper/manuscript_Nature_Communications.tex": {
-      "lines": 2714,
+      "lines": 2713,
       "max_sentence_words": 95,
       "max_sentence_words_incl_math": 134,
       "overlong_gt_95": 0,
