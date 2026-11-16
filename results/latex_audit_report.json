@@ -1,0 +1,70 @@
+{
+  "file": "paper/manuscript_Information_Fusion.tex",
+  "line_count": 2703,
+  "sentence_word_limit": 95,
+  "source_line_char_limit": 95,
+  "max_source_line_chars": 95,
+  "overlong_source_line_count_gt_95_chars": 0,
+  "length_metric_unit": "words_per_sentence and source_tex_chars_per_line (both <= 95)",
+  "rendered_pdf_overfull_hbox_gt_1pt": 0,
+  "rendered_pdf_overfull_vbox": 0,
+  "sections": [
+    "Introduction",
+    "Related Work",
+    "Methodology",
+    "Experimental Setup",
+    "Experimental Results",
+    "Discussion",
+    "Conclusion",
+    "Declaration of Competing Interest",
+    "Data and Code Availability",
+    "Mathematical Proofs of Theorems 1--5 and Corollary 2.1",
+    "Cohort Provenance, Timestamp Auditing, and Architectural Specifications"
+  ],
+  "subsection_count": 19,
+  "counts": {
+    "definitions": 5,
+    "theorems": 5,
+    "remarks": 3,
+    "tables": 8,
+    "figures": 8,
+    "algorithms": 1
+  },
+  "structural_checks": {
+    "algorithm_pkg_used_if_loaded": true,
+    "has_conceptual_or_multi_table_suite": true,
+    "has_implementation_remarks": true,
+    "has_paper_roadmap": true,
+    "has_evaluation_questions_or_axes": true,
+    "has_discussion_section": true,
+    "overlong_sentence_count_gt_95_words": 0,
+    "overlong_source_line_count_gt_95_chars": 0
+  },
+  "overlong_sentences_top10": [],
+  "companion_manuscripts": {
+    "paper/manuscript_Information_Fusion.tex": {
+      "lines": 2703,
+      "max_sentence_words": 95,
+      "max_sentence_words_incl_math": 134,
+      "overlong_gt_95": 0,
+      "max_source_line_chars": 95,
+      "overlong_source_line_gt_95_chars": 0
+    },
+    "paper/manuscript_Nature_Communications.tex": {
+      "lines": 2714,
+      "max_sentence_words": 95,
+      "max_sentence_words_incl_math": 134,
+      "overlong_gt_95": 0,
+      "max_source_line_chars": 95,
+      "overlong_source_line_gt_95_chars": 0
+    },
+    "paper/manuscript_Genome_Biology_Software.tex": {
+      "lines": 2741,
+      "max_sentence_words": 95,
+      "max_sentence_words_incl_math": 134,
+      "overlong_gt_95": 0,
+      "max_source_line_chars": 95,
+      "overlong_source_line_gt_95_chars": 0
+    }
+  }
+}

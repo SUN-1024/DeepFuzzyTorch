@@ -1,0 +1,24 @@
+# Python & Virtual Environments
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.DS_Store
+.licenses/
+
+# Large binary upstream feature caches in data_benchmark (tracked via SHA256 in results/reproducibility_manifest.json)
+data_benchmark/**/*.npz
+data_benchmark/**/*.parquet
+
+# LaTeX build intermediates (keep .tex, .bib, .bbl, and compiled .pdf tracked; keep results/*.log unignored)
+**/*.aux
+**/*.out
+**/*.blg
+**/*.fls
+**/*.fdb_latexmk
+**/*.synctex.gz
+**/*.toc
+paper/*.log
+figures/**/*.log
