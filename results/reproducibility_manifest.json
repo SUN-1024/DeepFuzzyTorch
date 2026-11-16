@@ -1,6 +1,6 @@
 {
   "execution_command": "PYTHONPATH=. python benchmarks/update_r3_gpu_artifacts.py --relock-only",
-  "execution_timestamp_utc": "2026-11-16T00:30:02.819654+00:00",
+  "execution_timestamp_utc": "2026-11-16T00:36:25.538819+00:00",
   "execution_device": "cpu",
   "gpu_name": "CPU",
   "elapsed_seconds": 0.01,
@@ -103,7 +103,7 @@
     "benchmarks/build_companion_manuscripts.py": "4674630794369164199cf08d66a69e73daafca789f9c61c046424a987c9fe85c",
     "figures/fig0_redesign_20261108/generate_fig0_clean.py": "8ab2f5e38c320baaf1c7cd010d3c04452241928733f7481a52f360e206f2b63d",
     "pyproject.toml": "1b95a3f4d359cd8147023ef3b911d6fdaa083e5e205f17f87accf6d05a605690",
-    "README.md": "89136872cc6e1432d1290156508e809e1ad0f36342a4d3285eb3c8c4281373ed"
+    "README.md": "11bbc50be28aca5bbad6b9e0b05c7d22c936c9ae9bdbab684798859110572451"
   },
   "artifact_sha256": {
     "results/benchmark_results.json": "adead5550736621f3d7157916f106993a1c52053237098a274721aaa77a188f5",
