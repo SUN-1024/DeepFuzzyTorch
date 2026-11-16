@@ -13,7 +13,7 @@ Verifies:
      under fixed non-vacuity masses r_m = mu_m + nu_m in (0, 1))
   5. Theorem 5: Fuzzy-Rough Inclusion Inequality (0 <= R_low(A) <= A <= R_up(A) <= 1) in both
      DifferentiableFuzzyRoughLayer and FuzzyRoughAttentionGate
-  6. Exact White-Box Rule Reconstruction in DeepConceptTSKHead (max |y_pred - y_recon| < 1e-6)
+  6. Empirical White-Box Rule Reconstruction in DeepConceptTSKHead (max |y_pred - y_recon| < 1e-6)
   7. Masked NaN Sanitization & End-to-End Autograd Backpropagation
   8. Statistical Evaluation Integrity (paired_bootstrap_pvalue(y, p, p) == 1.0, asymptotic Mantel-Haenszel Log-Rank test)
 """
@@ -3611,6 +3611,140 @@ def test_r27_codex_round26_deep_vjp_f32_cast_1shot_bwd_spike_metrics_and_runtime
         assert len(d) == 0
 
 
+def test_phase1_5_tie_order_boltzmann_and_doc_audit():
+    """Guard interior active-set jumps, unequal-mu tie swaps, softmin, and documentation."""
+    import ast
+    import math
+    import re
+    from pathlib import Path
+
+    from benchmarks.export_tables_and_manuscript import _benjamini_hochberg, generate_markdown_summary
+
+    def ifn(mu, nu):
+        return IntuitionisticFuzzyTensor(
+            *(torch.tensor([[value]], dtype=torch.float64) for value in (mu, nu, 1.0 - mu - nu))
+        )
+
+    def fuse(gamma, third_certainty, tie_offset=0.0, reverse=False):
+        fusion = IFSChoquetFusion(num_modalities=3, conflict_penalty=gamma).double()
+        with torch.no_grad():
+            fusion.choquet_lambda_raw.fill_(1.0)  # p = exp(0.35*tanh(1)) != 1
+            fusion.fuzzy_density_logits.zero_()
+            direction = -1.0 if reverse else 1.0
+            return fusion([
+                ifn(0.5, 0.125 + direction * tie_offset),
+                ifn(0.125, 0.5 - direction * tie_offset),
+                ifn(third_certainty / 2.0, third_certainty / 2.0),
+            ])
+
+    def fused_values(fused):
+        return torch.stack((fused.mu, fused.nu, fused.pi)).flatten()
+
+    # A: O={0,1} has an unequal-mu certainty tie, but canonical order is preserved
+    # as modality 2 activates. Its vanishing conflict changes the pair average from
+    # C to C/3; the discount and interior fused-output jumps are linear in gamma/|O|.
+    eps = 2.0 ** -38
+    conflict_two = 0.5 * 0.5 + 0.125 * 0.125
+    jumps = []
+    scaled_discounts = []
+    for gamma in (0.01, 0.001, 0.0001):
+        inactive, aux_inactive = fuse(gamma, 0.0)
+        active, aux_active = fuse(gamma, eps)
+        c_inactive = aux_inactive["conflict"].item()
+        c_active = aux_active["conflict"].item()
+        assert abs(c_inactive - conflict_two) < 1e-14
+        assert abs(c_active - conflict_two / 3.0) < 2e-12
+        assert aux_inactive["weights"][0, 0, 0] < aux_inactive["weights"][0, 1, 0]
+        assert aux_active["weights"][0, 0, 0] < aux_active["weights"][0, 1, 0]
+        discount_jump = math.exp(-gamma * c_active) - math.exp(-gamma * c_inactive)
+        scaled_discounts.append(discount_jump / (gamma / 2.0))
+        assert abs(scaled_discounts[-1] - 4.0 * conflict_two / 3.0) < 0.001
+        jump = (fused_values(active) - fused_values(inactive)).abs().max().item()
+        assert 0.20 < jump / (gamma / 2.0) < 0.24
+        jumps.append(jump)
+    assert all(abs(jumps[i + 1] / jumps[i] - 0.1) < 0.001 for i in range(2))
+    assert abs(scaled_discounts[-1] - scaled_discounts[-2]) < abs(scaled_discounts[-2] - scaled_discounts[-3])
+    no_conflict_inactive, _ = fuse(0.0, 0.0)
+    no_conflict_active, _ = fuse(0.0, eps)
+    assert (fused_values(no_conflict_active) - fused_values(no_conflict_inactive)).abs().max().item() < 5e-12
+
+    # B: approach the same tie from opposite certainty orders while modality 2
+    # activates. Even with gamma=0 the nonlinear capacity swaps unequal mu values.
+    exponent = math.exp(0.35 * math.tanh(1.0))
+    first_weight = 0.5 ** exponent
+    limit_forward = 1.0 - (1.0 - 0.5) ** first_weight * (1.0 - 0.125) ** (1.0 - first_weight)
+    limit_reverse = 1.0 - (1.0 - 0.5) ** (1.0 - first_weight) * (1.0 - 0.125) ** first_weight
+    expected_swap = abs(limit_reverse - limit_forward)
+    swap_jumps = []
+    for offset in (2.0 ** -20, 2.0 ** -30, 2.0 ** -38):
+        before, before_aux = fuse(0.0, 0.0, tie_offset=offset)
+        after, after_aux = fuse(0.0, offset, tie_offset=offset, reverse=True)
+        assert before_aux["weights"][0, 0, 0] < before_aux["weights"][0, 1, 0]
+        assert after_aux["weights"][0, 0, 0] > after_aux["weights"][0, 1, 0]
+        swap_jumps.append(abs(after.mu.item() - before.mu.item()))
+        assert 0.070 < swap_jumps[-1] < 0.071
+    assert abs(swap_jumps[-1] - expected_swap) < 1e-10
+    assert abs(swap_jumps[-1] - expected_swap) < abs(swap_jumps[0] - expected_swap)
+
+    # Boltzmann expectation is non-monotone below tau=1, but its coordinate
+    # derivatives are nonnegative on [0,1]^3 at tau >= 1.
+    def boltzmann_expectation(values, tau):
+        return (torch.softmax(-values / tau, dim=-1) * values).sum(dim=-1)
+
+    boundary = torch.tensor([0.0, 1.0], dtype=torch.float64)
+    interior = boundary.clone()
+    interior[1] -= 1e-6
+    derivative = (boltzmann_expectation(boundary, 0.15) - boltzmann_expectation(interior, 0.15)).item() / 1e-6
+    assert -0.00720 < derivative < -0.00718
+    generator = torch.Generator().manual_seed(1501)
+    samples = torch.rand((256, 3), generator=generator, dtype=torch.float64)
+    corners = torch.tensor([[0.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, 1.0, 1.0], [1.0, 1.0, 1.0]], dtype=torch.float64)
+    for tau in (1.0, 2.0, 10.0):
+        values = torch.cat((samples, corners)).requires_grad_()
+        derivatives = torch.autograd.grad(boltzmann_expectation(values, tau).sum(), values)[0]
+        assert float(derivatives.min()) >= -1e-12
+
+    # Parse the TOML-compatible string arrays without adding a Python 3.11-only dependency.
+    project_text = Path(_REPO_ROOT, "pyproject.toml").read_text(encoding="utf-8")
+    extras_match = re.search(r"(?ms)^\[project\.optional-dependencies\]\s*\n(.*?)(?=^\[|\Z)", project_text)
+    assert extras_match is not None
+    extras_text = extras_match.group(1)
+    def extra(name):
+        match = re.search(rf"(?ms)^{name}\s*=\s*(\[[^\]]*\])", extras_text)
+        assert match is not None, name
+        return set(ast.literal_eval(match.group(1)))
+
+    expected_benchmarks = {"xgboost>=1.7.0", "catboost>=1.2.0", "tabpfn>=2.0.0"}
+    assert expected_benchmarks <= extra("benchmark")
+    assert {"pytest>=7.0.0"} | expected_benchmarks <= extra("all")
+    assert "pytest>=7.0.0" in extra("dev")
+
+    assert "asymptotic Mantel-Haenszel Log-Rank test" in (__doc__ or "")
+    assert "Empirical White-Box Rule Reconstruction" in (__doc__ or "")
+    assert ("exact " + "Log-Rank") not in (__doc__ or "")
+    tie_doc = test_r15_fusion_ties_sanitization_and_loss_bounds.__doc__ or ""
+    assert "canonical-index tie-breaking" in tie_doc and "active-set conflict jump" in tie_doc
+    readme_lines = Path(_REPO_ROOT, "README.md").read_text(encoding="utf-8").splitlines()
+    track0 = next(line for line in readme_lines if "**Track 0: Mathematical Audit**" in line)
+    track1 = next(line for line in readme_lines if "**Track 1: ADNI Cohort 1**" in line)
+    assert "$40\\times 40$ Grid" in track0 and "50-Pt Sweep" in track0 and "$N_{\\text{tok}}=45$" in track0
+    assert "TSK" not in track0 and "TSK text rule reconstruction error" in track1
+
+    # Verify the actual frozen-result export and BH family, without writing reports.
+    with Path(_REPO_ROOT, "results", "benchmark_results.json").open(encoding="utf-8") as stream:
+        report = generate_markdown_summary(json.load(stream))
+    matched = report.split("## Table 4C:", 1)[1].split("## Table 5:", 1)[0]
+    rows = re.findall(r"(?m)^\| (?!\*\*)[^|]+ \| [0-9.]+ \(([0-9.]+); ([0-9.]+)\)", matched)
+    assert len(rows) == 11 and all(float(q) >= 0.286 for _, q in rows)
+    tabpfn_row = next(line for line in matched.splitlines() if line.startswith("| TabPFN v2 |"))
+    assert "(0.026; 0.286)" in tabpfn_row and "11 available comparator tests" in matched
+    assert "| QMF (adapted) |" in matched
+    assert "binary `is_tumor_or_stroma` endpoint" in report and "-2x PLIP PCA-64" in report
+    q_check = _benjamini_hochberg({"a": 0.01, "b": 0.04, "c": 0.03, "d": 1.0})
+    assert abs(q_check["a"] - 0.04) < 1e-12 and abs(q_check["b"] - 0.04 * 4.0 / 3.0) < 1e-12
+    assert abs(q_check["c"] - q_check["b"]) < 1e-12 and q_check["d"] == 1.0
+
+
 def run_all_verifications():
     print("=" * 72)
     print("DeepFuzzyTorch: Verifying Core Operators, Theorems & Statistical Suite")
@@ -3652,6 +3786,7 @@ def run_all_verifications():
         (test_phase1_clinical_concept_masks_and_pfs_tta, "[PASS] Phase-1 Clinical Concept Masks (fp32/fp16) & PFS-TTA Simplex/Disk Behavior"),
         (test_phase1_conflict_sweep_separated_aurocs, "[PASS] Phase-1 Separated Conflict-Only / Hesitancy-Only / Composite Sweep AUROCs"),
         (test_phase1_ddef_and_fuml_baselines, "[PASS] Phase-1 DDEF (Inf. Fusion'24) & FUML (ICML'25) Baselines & Vacuity Invariance"),
+        (test_phase1_5_tie_order_boltzmann_and_doc_audit, "[PASS] Phase-1.5 Theorem Tie-Order Guard, Boltzmann tau>=1 vs <1 & Packaging Audit"),
     ]
     declared_test_names = {
         name for name, obj in globals().items() if name.startswith("test_") and callable(obj)

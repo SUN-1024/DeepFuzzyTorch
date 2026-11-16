@@ -91,9 +91,9 @@ high-dimensional transcriptomic and morphometric spaces ($D \ge 320\text{--}1,00
 and black-box fusion heads lacking auditable rule representations.
 
 \subsubsection*{Results}
-We present \texttt{DeepFuzzyTorch} (\texttt{v0.2.0}), an open-source PyTorch software library
-providing five composable, GPU-accelerated differentiable fuzzy-rough operator blocks
-(\texttt{IFS\allowbreak Choquet\allowbreak Fusion}, \texttt{Hesitant\allowbreak
+We present \texttt{DeepFuzzyTorch} (\texttt{v0.2.1}), an open-source PyTorch software library
+providing five composable PyTorch fuzzy operator blocks and an offline tensor-accelerated
+selector (\texttt{IFS\allowbreak Choquet\allowbreak Fusion}, \texttt{Hesitant\allowbreak
 Fuzzy\allowbreak Aggregator}, \texttt{Differentiable\allowbreak Fuzzy\allowbreak
 Rough\allowbreak Layer}/\allowbreak\texttt{Fuzzy\allowbreak Rough\allowbreak Feature\allowbreak
 Reducer}, \texttt{Deep\allowbreak Concept\allowbreak TSKHead}, and
@@ -102,16 +102,17 @@ theorems and an end-to-end missing-modality/concept-mask invariance corollary ($
 fixed-width padding-value discrepancy; algebraic submodel equivalence within float32 reduction
 rounding). Evaluated across 5,356 unique oncology and clinical participants and 4,849
 histopathology patch/tile records against fourteen multimodal and tabular comparators
-(including \texttt{QMF}, adapted \texttt{RCML}/\texttt{DrFuse}/\texttt{DDEF}/\texttt{FUML},
-\texttt{XGBoost}, \texttt{CatBoost}, and \texttt{TabPFN~v2}), \texttt{FuzzyRoughFeatureReducer}
-performs supervised in-fold reduction of an unsupervised transductive 1,000-gene TCGA PanCancer
-Atlas MAD RNA-Seq pool to $K^*=20$ genes ($98.0\%$ compression, $94.05\%$ RNA branch parameter
-reduction, 5-fold pairwise Jaccard $0.3816$). This 20-gene reduct recovers 8 enriched Reactome
-pathways at Benjamini--Hochberg $\text{FDR}<0.05$ across all 676 predeclared
-$K_{\mathrm{bg}}\ge 2$ pathways in the custom 1,000-gene background ($q_{\mathrm{BH}}=0.0308$,
-led by \texttt{R-HSA-5686938} endogenous TLR regulation at $25.0\times$ enrichment) and
-improves 4-modality pan-cancer fusion over matched unreduced 1,000-gene fusion ($0.7403$ vs.\
-$0.6925$ AUROC, $q_{\mathrm{BH}}=0.0025$; OS C-index $0.7514$ vs.\ $0.6933$). Across $N=1,112$
+(including \texttt{QMF (adapted)}, adapted
+\texttt{RCML}/\texttt{DrFuse}/\texttt{DDEF}/\texttt{FUML}, \texttt{XGBoost}, \texttt{CatBoost},
+and \texttt{TabPFN~v2}), \texttt{FuzzyRoughFeatureReducer} performs supervised in-fold
+reduction of an unsupervised transductive 1,000-gene TCGA PanCancer Atlas MAD RNA-Seq pool to
+$K^*=20$ genes ($98.0\%$ compression, $94.05\%$ RNA branch parameter reduction, 5-fold pairwise
+Jaccard $0.3816$). This 20-gene reduct recovers 8 enriched Reactome pathways at
+Benjamini--Hochberg $\text{FDR}<0.05$ across all 676 predeclared $K_{\mathrm{bg}}\ge 2$
+pathways in the custom 1,000-gene background ($q_{\mathrm{BH}}=0.0308$, led by
+\texttt{R-HSA-5686938} endogenous TLR regulation at $25.0\times$ enrichment) and improves
+4-modality pan-cancer fusion over matched unreduced 1,000-gene fusion ($0.7403$ vs.\ $0.6925$
+AUROC, $q_{\mathrm{BH}}=0.0025$; OS C-index $0.7514$ vs.\ $0.6933$). Across $N=1,112$
 deduplicated unique ADNI participants, observed-pair conflict $C_{\mathcal{O}}$ is $1.51\times$
 higher in $n=198$ real-world discordant patients than in $n=914$ concordant patients ($p = 1.75
 \times 10^{-17}$), pure $C_{\mathcal{O}}$ detects $\gamma=0.8$ swaps at $0.7000$ AUROC
@@ -132,8 +133,8 @@ triage, and machine-precision white-box rule export.
 
 \vspace{0.35em}
 \noindent\textbf{Keywords:} Open-Source PyTorch Software; Multi-Omics Data Integration;
-Differentiable Fuzzy-Rough Feature Reduction; Custom-Background Pathway Enrichment; Missing
-Modalities; Biomarker Discordance; Computational Pathology.
+Fuzzy-Rough Feature Selection; Custom-Background Pathway Enrichment; Missing Modalities;
+Biomarker Discordance; Computational Pathology.
 \end{abstract}
 
 \section{Background}
@@ -141,16 +142,17 @@ Modalities; Biomarker Discordance; Computational Pathology.
 
 Modern clinical diagnostics and precision oncology rely on synthesizing complementary evidence
 across heterogeneous biological scales \cite{baltrusaitis2018multimodal,acosta2022multimodal}.
-In neurodegenerative diseases such as Alzheimer's disease (AD), revised diagnostic criteria
-integrate structural magnetic resonance imaging (MRI), fluorodeoxyglucose positron emission
-tomography (FDG-PET), ultra-sensitive blood-based biomarkers (plasma phosphorylated tau-181
-[pTau181], pTau217, and glial fibrillary acidic protein [GFAP]), and neurocognitive assessments
-\cite{jack2024revised,palmqvist2020discriminative,%
-janelidze2020plasma}. Similarly, in computational oncology, prognostic stratification combines
-gigapixel histopathology whole-slide images (WSIs) encoded by vision foundation models
-\cite{chen2024uni,lu2024visual,filiot2023scaling,filiot2024phikonv2,%
+In neurodegenerative diseases such as Alzheimer's disease (AD), revised criteria distinguish
+Core~1 diagnostic AD biomarkers, including amyloid and phosphorylated tau measures, from
+staging or non-specific injury markers such as FDG-PET and glial fibrillary acidic protein
+(GFAP) \cite{jack2024revised,palmqvist2020discriminative,janelidze2020plasma}. Clinical
+assessment can also include structural magnetic resonance imaging (MRI), plasma phosphorylated
+tau-181 (pTau181), and neurocognitive scores. In computational oncology, prognostic
+stratification combines gigapixel histopathology whole-slide images (WSIs) encoded by vision
+foundation models \cite{chen2024uni,lu2024visual,filiot2023scaling,filiot2024phikonv2,%
 kaiko2024towards,wang2022transformer,huang2023visual} with multi-omic molecular signatures and
-clinical staging \cite{kather2019predicting,jaume2024survpath,wu2024muse}.
+clinical staging \cite{kather2019predicting,jaume2024survpath}. In a separate clinical setting,
+MUSE learns multimodal graph representations of EHR and neuroimaging data \cite{wu2024muse}.
 
 Despite the proliferation of multimodal deep learning architectures, translating these models
 from curated research benchmarks into routine hospital workflows faces four fundamental
@@ -169,11 +171,11 @@ liang2021multibench}:
     ($\pi$).
     \item \textbf{Cross-Modality Evidence Conflict \& Physiological Confounding:} Real-world
     modalities frequently contradict one another due to sensor artifacts or systemic
-    comorbidities \cite{xu2024reliable,zhang2023provable}. A prime clinical example occurs in
-    Alzheimer's blood screening: impaired renal clearance in chronic kidney disease
-    ($\text{CKD}$, $\text{eGFR} < 60\text{ mL/min/1.73m}^2$) is associated with elevated plasma
-    pTau181 and pTau217 concentrations in cognitively normal, amyloid-negative individuals
-    \cite{mielke2022performance}. Classical Dempster--Shafer combination rules suffer from
+    comorbidities \cite{xu2024reliable,zhang2023provable}. Community studies associate chronic
+    kidney disease (CKD) and lower estimated glomerular
+    filtration rate (eGFR) with elevated plasma pTau181 and pTau217 concentrations
+    \cite{mielke2022performance}; this association does not establish diagnostic confounding
+    or its cause. Classical Dempster--Shafer combination rules suffer from
     Zadeh's paradox \cite{shafer1976mathematical,zadeh1986simple,denoeux2019decision}, where
     normalizing by $1-K$ under high conflict ($K\to 1$) concentrates belief masses rather than
     inflating epistemic abstention.
@@ -198,12 +200,14 @@ vision \cite{riba2020kornia}, \texttt{Theseus} for nonlinear least-squares optim
 fuzzy logic tensor networks \cite{badreddine2022ltntorch}. In granular uncertainty modeling,
 classical fuzzy set theories \cite{zadeh1965fuzzy} provide mathematical structures tailored for
 incomplete, conflicting, and ambiguous clinical evidence; however, existing software toolkits
-and deep fuzzy fusion architectures---such as the \texttt{scikit-learn}-compatible
-\texttt{fuzzy-rough-learn} library \cite{lenz2022fuzzyroughlearn}, the differentiable Choquet
-integral neural fusion network \texttt{ChIMP}/\texttt{iChIMP} over scalar source scores
-\cite{islam2020chimp}, and deep TSK classifiers \cite{wu2020optimize,cui2021curse}---remain
-either non-differentiable tabular estimators, single-valued Choquet aggregators without
-Atanassov vacuity/conflict decomposition, or unimodal rule networks. Specifically, Atanassov's
+and deep fuzzy fusion architectures have complementary strengths. The
+\texttt{scikit-learn}-compatible \texttt{fuzzy-rough-learn} library
+\cite{lenz2022fuzzyroughlearn} supports configurable ordered-weighted-average (OWA) soft
+minima and maxima; \texttt{ChIMP}/\texttt{iChIMP} offers differentiable Choquet aggregation
+of scalar source scores \cite{islam2020chimp}; and deep TSK classifiers provide rule networks
+\cite{wu2020optimize,cui2021curse}. These tools do not combine PyTorch autograd with the
+intuitionistic vacuity and conflict decomposition and offline permutation-calibrated selection
+studied here. Specifically, Atanassov's
 Intuitionistic Fuzzy Sets (IFS)
 \cite{atanassov1986intuitionistic,xu2007intuitionistic} decompose belief into membership $\mu$,
 non-membership $\nu$, and epistemic hesitancy $\pi = 1 - \mu - \nu$. Torra's Hesitant Fuzzy
@@ -218,8 +222,9 @@ end-to-end inside autograd pipelines has remained hindered by non-differentiable
 operators, $O(K_f^D)$ rule-base explosion, and floating-point cancellation near simplex
 boundaries.
 
-To bridge this gap, we present \texttt{DeepFuzzyTorch}, an open-source PyTorch operator library
-and unified differentiable fuzzy-rough multimodal framework (Figure~\ref{fig:paradigm_teaser}).
+To bridge this gap, we present \texttt{DeepFuzzyTorch}, an open-source curated integration of
+existing axiomatic fuzzy primitives into a PyTorch operator library and multimodal framework
+(Figure~\ref{fig:paradigm_teaser}).
 Rather than claiming universal AUROC dominance over unconstrained black-box architectures when
 all modalities are cleanly observed, \texttt{DeepFuzzyTorch} delivers competitive
 discrimination on heterogeneous clinical cohorts while providing structural guarantees---exact
@@ -283,15 +288,17 @@ Our main contributions are summarized as follows:
     \texttt{evaluate\_\allowbreak exported\_\allowbreak rules\_\allowbreak text()}.
     \item \textbf{Rigorous Multi-Center Validation Against Modern Baselines:} We benchmark
     across 5,356 unique clinical/oncology participants and 4,849 histopathology records against
-    fourteen multimodal and tabular comparators---including \texttt{QMF}
+    fourteen multimodal and tabular comparators---including \texttt{QMF (adapted)}
     \cite{zhang2023provable},
-    multimodal adaptations of \texttt{RCML} \cite{xu2024reliable}, \texttt{DrFuse}
-    \cite{yao2024drfuse}, \texttt{DDEF} \cite{shao2024dual}, and \texttt{FUML}
+    multimodal adaptations of \texttt{RCML (adapted)} \cite{xu2024reliable},
+    \texttt{DrFuse (adapted)}
+    \cite{yao2024drfuse}, \texttt{DDEF (adapted)} \cite{shao2024dual}, and \texttt{FUML
+    (adapted)}
     \cite{duan2025fuml}, \texttt{XGBoost} \cite{chen2016xgboost}, \texttt{CatBoost}
     \cite{prokhorenkova2018catboost}, \texttt{TabPFN~v2} \cite{hollmann2025tabpfn},
     equalized-supervision fairness controls, four transcriptomic feature selectors
     (\texttt{PCA-20}, \texttt{MI-20}, \texttt{Lasso-20}, \texttt{mRMR-20}), and
-    \texttt{Logit-Tent} adapted from \texttt{Tent} \cite{wang2021tent}. Across six tracks, we
+    \texttt{Logit-Tent (adapted)} from \texttt{Tent} \cite{wang2021tent}. Across six tracks, we
     separate ADNI Cohort~1 full-population ($N=1,137$, $0.8270$), same-visit ($n=924$,
     $0.8387$), and complete four-modality ($N_{\text{comp}}=854$, $0.8371$) metrics alongside
     superior tree/foundation-model missingness retention ($\text{MRR}=0.9344$), separated
@@ -330,6 +337,7 @@ with publication venues and years.}
 \label{tab:paradigm_comparison}
 \scriptsize
 \setlength{\tabcolsep}{2.0pt}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.5cm}cccccc@{}}
 \toprule
 \textbf{Methodological Paradigm (Venue)} & \shortstack{\textbf{Missing}\\\textbf{Modality}} &
@@ -340,8 +348,10 @@ with publication venues and years.}
 \midrule
 Early/Late Fusion (\textit{TPAMI'19}) \cite{baltrusaitis2018multimodal} & Zero/Mean Imput. &
 Linear Avg. & Additive / MLP & None & No (Black-Box) & None \\
-Masked Cross-Attn (\textit{NeurIPS'17 / NCA'20}) \cite{vaswani2017attention,arevalo2017gated} &
+Masked Cross-Attn (\textit{NeurIPS'17}) \cite{vaswani2017attention} &
 Key-Pad Mask & Softmax Wt. & Token Dot-Prod. & None & No (Attn Maps) & None \\
+Gated Multimodal Units \cite{arevalo2017gated} & Input-dependent & Learned Gates &
+Gated Fusion & None & No (Black-Box) & None \\
 Generative / Disentangled (\textit{AAAI'21 / AAAI'24}) \cite{ma2021smil,yao2024drfuse} &
 Halluc.\ / Shared-Spec. & Attn Logit Pool & Cross-Modal Latent & None & No (Black-Box) & None
 \\
@@ -354,24 +364,26 @@ Quality / Conflict Fusion (\textit{ICML'23 / AAAI'24}) \cite{zhang2023provable,x
 None \\
 Classical FRS / Deep TSK (\textit{TFS'20 / FUZZ-IEEE'22})
 \cite{jensen2004fuzzy,wu2020optimize,lenz2022fuzzyroughlearn} & Complete Only & None &
-Antecedent Prod. & Hard $\inf/\sup$ & Yes ($O(K_f^D)$) & None \\
+Antecedent Prod. & Hard / OWA Extrema & Yes ($O(K_f^D)$) & None \\
 \midrule
 \textbf{\texttt{DeepFuzzyTorch} (Ours)} & \textbf{Vacuity $\langle 0,0,1\rangle$} &
 \textbf{Monotonic $\pi_{\text{fused}}\uparrow$} & \textbf{Choquet $G_k$} &
 \textbf{$\underline{R}_\tau \le A \le \overline{R}_\tau$} & \textbf{8-Dec.\ TSK} & \textbf{PFS
 $\mathcal{L}_{\text{PFS}}$} \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table*}
 
 \subsubsection{Incomplete Multimodal Learning}
 Handling missing modalities at inference time has been approached through latent imputation and
 cross-modal generation \cite{ma2021smil}, attention key-padding masks
-\cite{vaswani2017attention,shaik2024survey}, shared-specific representation disentanglement in
-DrFuse \cite{yao2024drfuse}, bipartite patient--modality graph propagation in MUSE
-\cite{wu2024muse}, multimodal pathway--histology survival transformers in SurvPath
-\cite{jaume2024survpath}, non-generative evidential survival fusion in EMMS
-\cite{xing2026emms}, and fuzzy possibility/necessity multi-view learning in FUML
+\cite{vaswani2017attention,shaik2024survey}, and shared-specific representation
+disentanglement in DrFuse \cite{yao2024drfuse}. Related multimodal methods address distinct
+settings: MUSE learns clinical EHR/neuroimaging patient--modality graph representations
+\cite{wu2024muse}; SurvPath performs pathway--histology survival fusion
+\cite{jaume2024survpath}; EMMS uses non-generative evidential survival fusion
+\cite{xing2026emms}; and FUML uses fuzzy possibility/necessity multi-view learning
 \cite{duan2025fuml}. Generative synthesis \cite{ma2021smil} propagates reconstructed
 activations through downstream layers, risking hallucination when key modalities are
 unacquired, whereas shared-encoder transformers \cite{vaswani2017attention,yao2024drfuse} can
@@ -384,14 +396,16 @@ missing-modality invariance to Atanassov intuitionistic fuzzy Choquet aggregatio
 concept-masked TSK inference: mapping an absent modality to $\mathcal{A}_{\text{miss}} =
 \langle 0, 0, 1\rangle$ yields exact $0.00$ fixed-width padding deviation across standalone
 fusion and the end-to-end multimodal pipeline (matching restricted variable-width submodels
-within float32 reduction rounding $\le 10^{-7}$) without generative imputation.
+within float32 reduction rounding $\le 10^{-7}$ in the Track-0 benchmark audit; tested
+default-scale variable-width unit checks give $\le 10^{-6}$) without generative imputation.
 
 \subsubsection{Evidential Deep Learning and Conflict-Guided Belief Fusion}
 Subjective Logic and Evidential Deep Learning (EDL)
-\cite{sensoy2018evidential,han2022trusted,shao2024dual,%
-zhang2023provable,xu2024reliable} parameterize Dirichlet concentration parameters
+\cite{sensoy2018evidential,han2022trusted,shao2024dual,xu2024reliable} parameterize Dirichlet
+concentration parameters
 $\bm{\alpha}$ or basic belief assignments to combine multi-view opinions. Quality-aware
-Multimodal Fusion (QMF) \cite{zhang2023provable} weights unimodal logits via energy-based
+Multimodal Fusion (the original QMF method; the comparator is QMF (adapted))
+\cite{zhang2023provable} separately weights unimodal logits via energy-based
 uncertainty and training-trajectory stability, while Reliable Conflictive Multi-View Learning
 (RCML) \cite{xu2024reliable} explicitly models conflictive multi-view opinions via evidential
 averaging. Dual-level deep evidential fusion (DDEF) \cite{shao2024dual} integrates multimodal
@@ -400,25 +414,31 @@ pixel-wise conflict-guided discounting with Dempster--Shafer combination to miti
 normalization paradox \cite{zadeh1986simple}. While effective for evidential opinion pooling,
 these architectures do not model non-additive coalition capacities across correlated clinical
 modalities, fuzzy-rough boundary regions in high-dimensional tabular/transcriptomic spaces, or
-white-box TSK rule extraction. \texttt{DeepFuzzyTorch} couples monotone Choquet capacities
-\cite{choquet1954theory,xu2010choquet} with exponential cross-polarity conflict discounting
-inside capacity-weighted geometric-hesitancy intuitionistic aggregation, provably routing
-inter-modality contradiction into epistemic hesitancy $\pi_{\text{fused}}$ at fixed certainty
-$r_m$ (Theorem~\ref{thm:conflict}).
+white-box TSK rule extraction. \texttt{DeepFuzzyTorch} couples certainty-ordered
+Choquet-style capacity integration \cite{choquet1954theory,xu2010choquet} with exponential
+cross-polarity conflict discounting inside capacity-weighted geometric-hesitancy intuitionistic
+aggregation. Its capacity weights depend on observed certainties and therefore do not define a
+fixed-capacity Choquet integral. At fixed certainty $r_m$, the integration provably routes
+inter-modality contradiction into epistemic hesitancy $\pi_{\text{fused}}$
+(Theorem~\ref{thm:conflict}).
 
 \subsubsection{Deep Fuzzy Systems and Granular Computing}
 Classical fuzzy-rough attribute reduction
-\cite{dubois1990rough,jensen2004fuzzy,cornelis2010attribute} and scikit-learn toolkits such as
-\texttt{fuzzy-rough-learn} \cite{lenz2022fuzzyroughlearn} rely on hard $\inf/\sup$ operations
-that route sparse single-winner subgradients only through extremal elements, contrasting with
-neural stochastic-gate selectors \cite{yamada2020feature} and mutual-information filters
-\cite{peng2005feature}. Meanwhile, PyTorch real-valued logic libraries such as
+\cite{dubois1990rough,jensen2004fuzzy,cornelis2010attribute} includes hard $\inf/\sup$
+extrema. The \texttt{scikit-learn} toolkit \texttt{fuzzy-rough-learn}
+\cite{lenz2022fuzzyroughlearn} also supports configurable OWA soft minima and maxima.
+\texttt{DeepFuzzyTorch} instead integrates \texttt{DifferentiableFuzzyRoughLayer} and the
+unimodal \texttt{FuzzyRoughAttentionGate} with PyTorch autograd, alongside an offline
+permutation-null-calibrated T-norm selector \texttt{FuzzyRoughFeatureReducer}. Related
+selection strategies include neural stochastic gates \cite{yamada2020feature} and
+mutual-information filters \cite{peng2005feature}. Meanwhile, PyTorch real-valued logic
+libraries such as
 \texttt{LTNtorch} \cite{badreddine2022ltntorch} ($[0,1]$ scalar truth predicates), explainable
 Choquet integral neural fusion networks such as \texttt{ChIMP}/\texttt{iChIMP}
 \cite{islam2020chimp} (aggregating real-valued source inputs via SGD without explicit
 $(\mu,\nu,\pi)$ vacuity or conflict discounting), and high-dimensional TSK systems
 \cite{jang1993anfis,wu2020optimize,cui2021curse} either lack intuitionistic/rough uncertainty
-decomposition or face rule-base explosion on hundreds of raw features. Our framework introduces
+decomposition or face rule-base explosion on hundreds of raw features. Our framework integrates
 a temperature-controlled soft-{\L}ukasiewicz operator preserving $\underline{R}_\tau(A) \le A
 \le \overline{R}_\tau(A)$ alongside a MAD-standardized pointwise T-norm fuzzy-rough reducer
 with permutation-null calibration (Theorem~\ref{thm:rough}) and a concept-masked TSK rule head.
@@ -686,14 +706,21 @@ unequal $\mu_m \neq \mu_n$ inside $B(r)$ always induce a finite capacity-swap ju
 \neq 0$ for $p \neq 1$) in $\mu_{\text{fused}}$ and $\nu_{\text{fused}}$, which
 \texttt{IFSChoquetFusion} resolves deterministically via stable descending sorting preserving
 canonical modality index order. Across the active-set transition $r_m : 0 \to \epsilon > 0$,
-when $C_{\mathcal{O}} = 0$ (including $|\mathcal{O}| = 1 \to 2$) both
-$d(\mathcal{C}_{\mathcal{O}})$ and fused outputs vary continuously; when $|\mathcal{O}| \ge 2$
+when $C_{\mathcal{O}} = 0$ (including $|\mathcal{O}| = 1 \to 2$) $d(\mathcal{C}_{\mathcal{O}})$
+varies continuously, as do fused outputs provided the
+pre-existing certainty ordering or equal-$\mu_j$ tie-block structure in $\mathcal{O}$ is
+preserved; when $|\mathcal{O}| \ge 2$
 with non-zero active conflict $C_{\mathcal{O}} > 0$, enlarging $|\mathcal{O}|$ changes the
 denominator $|\mathcal{O}|(|\mathcal{O}|-1)$ in Eq.~\eqref{eq:conflict_obs}, producing a
 $\gamma$-independent denominator jump in $C_{\mathcal{O}}$ and a uniform
-$O(\gamma/|\mathcal{O}|)$ jump in $d(\mathcal{C}_{\mathcal{O}})$ at $\gamma > 0$. For fused
-outputs, the $O_\delta(\gamma/|\mathcal{O}|)$ bound holds on any strict interior compact $\{r_m
-\le 1-\delta\}^{|\mathcal{O}|}$ ($\delta>0$). At closed boundary vertices $r_j=1$ with
+$|\Delta d|=O(\gamma/|\mathcal{O}|)$ jump in $d(\mathcal{C}_{\mathcal{O}})$ for
+$\gamma\ge0$, independently of the certainty ordering. For fused
+outputs, the $O_\delta(\gamma/|\mathcal{O}|)$ bound holds on each compact interior set
+$\{r_m \le 1-\delta\}^{|\mathcal{O}|}$ ($\delta>0$), provided the pre-existing certainty
+ordering or equal-$\mu_j$ tie-block structure among active modalities in $\mathcal{O}$ is
+preserved. A simultaneous reversal of a pre-existing unequal-$\mu$ tie at $p\ne1$ adds a
+finite capacity-swap jump even at $\gamma=0$. Under the same ordering proviso, at closed
+boundary vertices $r_j=1$ with
 $C_{\mathcal{O}} > 0$, letting $W_\pi = \sum_{j \in \mathcal{O}: r_j=1} w_j \in (0, 1]$ and
 $W_\mu = \sum_{j \in \mathcal{O}: \mu_j=1} w_j \in [0, 1)$ gives $|\Delta \pi_{\text{fused}}| =
 \Theta(\gamma^{W_\pi})$, $|\Delta \mu_{\text{fused}}| = \Theta(\gamma^{W_\mu})$ if $W_\mu > 0$
@@ -702,12 +729,13 @@ else $O_{\delta_\mu}(\gamma/|\mathcal{O}|)$, $|\Delta \nu_{\text{fused}}| =
 at $W_\mu = W_\pi \in (0, 1)$), and $\|\Delta \mathcal{A}_{\text{fused}}\|_\infty =
 \Theta(\gamma^{W_*})$ as $\gamma \to 0^+$ with $W_* = W_\mu$ if $W_\mu > 0$ else $W_\pi \in (0,
 1]$ (sublinear Hölder whenever $W_* < 1$). Setting $\gamma=0$ leaves $d \equiv 1$ and removes
-these fused-output discontinuities, while Eq.~\eqref{eq:ifs_encoder} in
+these discount-induced fused-output discontinuities, while Eq.~\eqref{eq:ifs_encoder} in
 Definition~\ref{def:ifn} guarantees $\mathcal{O}=\mathcal{A}$ in real arithmetic at fixed
 $\bm{o}_i$. Because Eq.~\eqref{eq:ifwa_closed} pools $(1-\hat{\mu}_m)$ and $\hat{\pi}_m$
 geometrically, closed boundary vertices satisfy $\hat{\mu}_m = 1 \implies \mu_{\text{fused}}=1$
 whereas $\hat{\nu}_m = 1$ ($\hat{\mu}_m=0,\hat{\pi}_m=0$) collapses $\pi_{\text{fused}}$ to $0$
-without zero-vetoing $(1-\hat{\mu}_j)$ across $j \neq m$. For all encoder outputs of
+without zero-vetoing $(1-\hat{\mu}_j)$ across $j \neq m$. For all acquired encoder outputs
+($o_m=1$) of
 Definition~\ref{def:ifn}, $\pi_m^{\text{prior}} > 0$ keeps every $\mathcal{A}_m$ strictly
 inside the interior ($\hat{\mu}_m, \hat{\nu}_m < 1, \hat{\pi}_m > 0$), avoiding boundary
 vetoes. For standalone callers passing malformed inputs (\texttt{NaN}, $\pm\infty$, negative
@@ -747,12 +775,18 @@ $(\mu_{\text{fused}}, \nu_{\text{fused}})$ is continuous across $B(r)$ iff $\mu_
 on $B(r)$ (with continuous absorbing limit $\mu_{\text{fused}}=1$ whenever some active modality
 satisfies $\hat{\mu}_{m^*}=1$), resolving unequal-$\mu$ capacity-swap jumps deterministically
 by canonical index tie-breaking. Across an active-set transition $r_m : 0 \to \epsilon > 0$,
-$\mathcal{F}_{\text{IFC}}$ is continuous across $C_{\mathcal{O}}=0$ transitions (including
-$|\mathcal{O}|=1 \to 2$), and for $|\mathcal{O}| \ge 2$ with $C_{\mathcal{O}} > 0$ exhibits a
-$\gamma$-independent denominator jump in $C_{\mathcal{O}}$ alongside a uniform
-$O(\gamma/|\mathcal{O}|)$ jump in $d(\mathcal{C}_{\mathcal{O}})$ at $\gamma > 0$, inducing an
-interior $O_\delta(\gamma/|\mathcal{O}|)$ fused-output jump on $\{r_m \le
-1-\delta\}^{|\mathcal{O}|}$ ($\delta>0$) and closed-boundary jumps $|\Delta \pi_{\text{fused}}|
+$d$ is continuous across $C_{\mathcal{O}}=0$ transitions (including
+$|\mathcal{O}|=1 \to 2$), as are fused outputs under the ordering condition below. For
+$|\mathcal{O}| \ge 2$ with $C_{\mathcal{O}} > 0$, the conflict exhibits a
+$\gamma$-independent denominator jump alongside a uniform
+$|\Delta d|=O(\gamma/|\mathcal{O}|)$ jump in $d(\mathcal{C}_{\mathcal{O}})$ for
+$\gamma\ge0$, independently of ordering, inducing an
+interior $O_\delta(\gamma/|\mathcal{O}|)$ fused-output jump on each $\{r_m \le
+1-\delta\}^{|\mathcal{O}|}$ ($\delta>0$), provided the pre-existing certainty ordering or
+equal-$\mu_j$ tie-block structure among active modalities in $\mathcal{O}$ is preserved. A
+simultaneous reversal of a pre-existing unequal-$\mu$ tie at $p\ne1$ adds the finite
+capacity-swap jump even at $\gamma=0$. Under the same ordering proviso, closed-boundary jumps
+$|\Delta \pi_{\text{fused}}|
 = \Theta(\gamma^{W_\pi})$, $|\Delta \nu_{\text{fused}}| = \Theta(\gamma^{W_*})$ ($W_* < 1$),
 and $\|\Delta \mathcal{A}_{\text{fused}}\|_\infty = \Theta(\gamma^{W_*})$ as $\gamma \to 0^+$
 ($W_\pi, W_* \in (0, 1]$, sublinear Hölder whenever $< 1$) when active boundary vertices
@@ -800,13 +834,18 @@ Eqs.~\eqref{eq:tsk_firing}--\eqref{eq:tsk_consequent}. Consequently, (i) the end
 $(p_i, \mathcal{A}_{\text{fused},i}, C_{\mathcal{O},i}, \bm{w}_i)$ is strictly invariant
 ($0.00$
 fixed-width deviation) to arbitrary finite or \texttt{NaN}/\texttt{Inf} values placed in
-$\{x_{i,k}\}_{k\in\mathcal{M}_{\text{miss}}}$ or masked clinical slots. Moreover, (ii) when
+$\{x_{i,k}\}_{k\in\mathcal{M}_{\text{miss}}}$. Optional elementwise masks also give exact
+$0.00$ invariance to arbitrary fill or perturbation values in masked entries of the
+\texttt{clinical\_\allowbreak concepts} tensor passed to \texttt{DeepConceptTSKHead},
+holding upstream modality encoder inputs $\{x_{i,m}\}$ fixed (or when shared raw clinical
+variables are simultaneously masked in $x_{i,\text{Clin}}$). Moreover, (ii) when
 \texttt{DeepConceptTSKHead} shares identical restricted rule parameters on observed concepts
 ($m_{z,i,c}=1$), the $M$-modality model output is algebraically equivalent in exact real
 arithmetic to the restricted $(|\mathcal{A}|, |\mathcal{C}_{\text{obs},i}|)$-submodel, matching
 its predicted probability within reduction-order rounding scaling proportionally with parameter
-magnitude ($\le 10^{-6}$ at all tested default float32 parameter scales, and $< 10^{-14}$ in
-float64 on tested scales).
+magnitude ($\le 10^{-7}$ in the Track-0 benchmark audit; $\le 10^{-6}$ across tested
+default-scale
+variable-width float32 unit checks, and $< 10^{-14}$ in float64 on tested scales).
 \end{corollary}
 
 \begin{theorem}[Partial-Order Monotonicity and Coupled Conflict Boundary]
@@ -938,6 +977,10 @@ o_{b,m} a_{b,m,0}$ with similarity $R_{b,m,g} = \exp(-\gamma_{\text{FR}}|a_{b,m,
 \operatorname{clamp}(1 - 0.12\,\operatorname{BND}_R(A)_m, 0.75, 1.0)$ while masking $o_{b,m}=0$
 outputs to $0$.
 
+The neural \texttt{DifferentiableFuzzyRoughLayer} and unimodal
+\texttt{FuzzyRoughAttentionGate} are end-to-end differentiable in PyTorch. The discrete
+\texttt{FuzzyRoughFeatureReducer} is an offline tensor-accelerated pointwise T-norm
+forward-greedy selector; its selection step is not end-to-end gradient-differentiable.
 For offline in-fold attribute reduction on high-dimensional modalities ($D=320$ ADNI MRI
 features and $D=1,000$ TCGA RNA-Seq genes), \texttt{FuzzyRough\allowbreak Feature\allowbreak
 Reducer} subsamples batches exceeding \texttt{max\_\allowbreak samples} ($4,096$) via
@@ -977,7 +1020,8 @@ default $12$) and performs forward-greedy maximization of normalized excess depe
 $\widehat{\Delta}\gamma_{\mathcal{B}}(D) = \frac{\gamma_{\mathcal{B}}(D) -
 \gamma_{\mathcal{B}}^{\text{null}}(D)}{\max(10^{-6}, 1 -
 \gamma_{\mathcal{B}}^{\text{null}}(D))} + 10^{-4}\gamma_{\mathcal{B}}(D)$. Candidate scores are
-aggregated across $5$ (ADNI MRI) and $8$ (TCGA RNA-Seq) stratified bootstrap views up to budget
+aggregated across $5$ (ADNI MRI) and $8$ (TCGA RNA-Seq) stratified without-replacement
+subsample views ($85\%$ per view below \texttt{max\_\allowbreak samples}) up to budget
 $K^*$ ($K^*=24$ on ADNI MRI, $92.50\%$ compression; $K^*=20$ on TCGA RNA-Seq, $98.00\%$
 compression), alongside a backward minimality check down to size $1$.
 
@@ -999,8 +1043,9 @@ satisfies $0 \le \min_{j\in V_i} I_{\mathcal{B}}(i,j) \le
 I_{\mathcal{B}}(i,j) \le 1$ with $\lim_{\tau \downarrow 0^+} \underline{R}_{\mathcal{B},\tau} =
 \underline{R}_{\mathcal{B},0}$ and $\gamma_{\mathcal{B}_1,\tau}(D) \le
 \gamma_{\mathcal{B}_2,\tau}(D)$ for all $\tau > 0$ (distinct from Part~I's Boltzmann-weighted
-expectation, which is non-monotone at large $\tau$; exact coordinatewise
-nondecreasing $\min/\max$ also preserves order).
+expectation, which can violate coordinatewise monotonicity at small temperatures $\tau<1$
+(whereas on $[0,1]$ it is coordinatewise nondecreasing for $\tau\ge1$, though lacking
+Part~II's uniform strict LogSumExp derivatives); hard $\min/\max$ also preserve order).
 \end{theorem}
 
 \subsection{Concept-Masked and Gated White-Box TSK Rule Head}
@@ -1042,8 +1087,11 @@ In ADNI Cohort~1 ($M=4, C=8$), $\bm{z}_i$ concatenates the four modality net-sup
 $z_{i,m} = \mu_{i,m} - \nu_{i,m} \in [-1, 1]$ ($m_{z,i,m}=o_{i,m}$) with four in-fold
 $z$-scored clinical biomarkers (\texttt{APOE4}, \texttt{MMSE}, \texttt{ADAS13}, \texttt{CDRSB};
 $m_{z,i,4+q}=o_{i,\text{Clin}} m^{\text{clin}}_{i,q}$ via optional elementwise
-\texttt{clinical\_\allowbreak concept\_\allowbreak masks}), whereas tracks without explicit
-clinical concept tensors
+\texttt{clinical\_\allowbreak concept\_\allowbreak masks}). Masked entries of the
+\texttt{clinical\_\allowbreak concepts} tensor passed to \texttt{DeepConceptTSKHead} have
+exact $0.00$ fill-value invariance with upstream encoder inputs $\{x_{i,m}\}$ held fixed, or
+when shared raw clinical variables are simultaneously masked in $x_{i,\text{Clin}}$; the head
+mask alone does not mask the encoder input. Tracks without explicit clinical concept tensors
 concatenate $M$ net supports and $M$ certainties $1-\pi_{i,m}$ and mask any trailing padded
 slots with $m_{z,i,c}=0$ (Appendix~\ref{app:provenance}). Under our mild $\ell_1$ gate penalty
 ($\lambda_{\text{sp}}=0.02$), $g_{r,c} = \sigma(\tilde{g}_{r,c})$ acts as smooth relevance
@@ -1090,14 +1138,20 @@ q_P(x_i)}{\sum_{i=1}^{N_{\text{tgt}}} m_i + 10^{-7}} + \lambda_{\text{div}} \sum
 For unsupervised transductive adaptation across $P=6$ pathology foundation models (Track~5), we
 calibrate target logits $\tilde{h}_{i,p} = \sigma(s_p \ell_{i,p})$ via per-expert scales
 $\bm{s} \in \mathbb{R}^P$ and reliability weights $\bm{\alpha} \in \mathbb{R}^P$ ($w_p =
-\operatorname{Softmax}_p(\alpha_p)$) anchored at source-CV reliability $\bm{\alpha}^0$ and
-target lower-median discordance $d_p^0$:
+\operatorname{Softmax}_p(\alpha_p)$) anchored at the fitted source-OOF
+\texttt{HesitantFuzzyAggregator} reliability vector $\bm{\alpha}^{\text{src}}$, frozen after
+the 150-step source fit. This differs from the source-CV AUROC initialization prior
+$\bm{\alpha}^0$ in the four-term source objective. Target lower-median discordance is
+$d_p^0 = \frac{1}{N_{\text{tgt}}}\sum_{i=1}^{N_{\text{tgt}}}
+|h_{i,p}^0 - \operatorname{median}_q(h_{i,q}^0)|$, where $h_{i,p}^0=\sigma(\ell_{i,p})$
+and the median takes the lower-middle order statistic for even $P=6$:
 \begin{equation}
 \label{eq:pfs_tta}
 \begin{aligned}
-\mathcal{L}_{\text{Track5-TTA}}(\bm{s}, \bm{\alpha}) &= 0.20\,\mathcal{L}_{\text{PFS}}\big(
-\mathcal{A}_{\text{HFS}}(\tilde{\mathcal{H}}(x))\big) \\
-&\quad + 2.5\sum_{p=1}^P w_p d_p^0 + \frac{0.15}{P}\sum_{p=1}^P (\alpha_p - \alpha_p^0)^2 \\
+&\mathcal{L}_{\text{Track5-TTA}}(\bm{s}, \bm{\alpha}) \\
+&= 0.20\,\mathcal{L}_{\text{PFS}}\big(\mathcal{A}_{\text{HFS}}(\tilde{\mathcal{H}}(x))\big) \\
+&\quad + 2.5\sum_{p=1}^P w_p d_p^0 + \frac{0.15}{P}\sum_{p=1}^P (\alpha_p -
+\alpha_p^{\text{src}})^2 \\
 &\quad + \frac{0.50}{P}\sum_{p=1}^P (s_p - 1)^2,
 \end{aligned}
 \end{equation}
@@ -1254,7 +1308,7 @@ RCML (adapted, \textit{AAAI'24}) \cite{xu2024reliable} & \shortstack{0.8229\\(0.
 & 0.8366 & 0.8340 & 0.8632 & 0.7493 & 0.7587 & 0.1752 & 0.0760 & 0.1333 & 0.7742/0.7781 &
 0.9366 & 0.458
 & 0.769 \\
-QMF (Zhang et al., \textit{ICML'23}) \cite{zhang2023provable} &
+QMF (Zhang et al., \textit{ICML'23}, adapt.) \cite{zhang2023provable} &
 \shortstack{0.8313\\(0.8071--0.8540)} & 0.8449 & 0.8394 & 0.8749 & 0.7608 & 0.7643 &
 0.1639 & 0.0483 & 0.1244 & 0.7759/0.7795 & 0.9286 & 0.472 & 0.769 \\
 DrFuse (adapted, \textit{AAAI'24}) \cite{yao2024drfuse} &
@@ -1320,20 +1374,18 @@ AUROC of $0.8270$ (95\% CI: $0.8005\text{--}0.8486$; accuracy $0.7617$, F1 $0.76
 $0.8387$ on $n=924$ and $0.8371$ (95\% CI: $0.8091\text{--}0.8612$; AUPRC $0.8755$, accuracy
 $0.7635$, F1 $0.7720$, Brier $0.1664$, ECE $0.0692$, AURC $0.1284$) on $N_{\text{comp}}=854$.
 After Benjamini--Hochberg correction across all $m=20$ Cohort-1 comparisons,
-\texttt{DeepFuzzyTorch} maintains statistical parity ($q_{\text{BH}}\ge 0.100$ on $N=1,137$ and
-$q_{\text{BH}}\ge 0.180$ on $N_{\text{comp}}=854$) with all thirteen neural, evidential, and
-gradient-boosted tree comparators---including \texttt{FUML (adapted)} ($0.8363 / 0.8453$,
-$q_{\text{BH}}=0.260 / 0.368$), \texttt{DDEF (adapted)} ($0.8323 / 0.8414$,
-$q_{\text{BH}}=0.769 / 0.895$), \texttt{DrFuse (adapted)} ($0.8316 / 0.8389$), \texttt{QMF}
-($0.8313 / 0.8394$), \texttt{GatedAttention} ($0.8298 / 0.8403$), \texttt{EvidentialDL}
-($0.8289
-/ 0.8378$), \texttt{XGBoost} ($0.8263 / 0.8333$), and \texttt{CatBoost} ($0.8262 /
-0.8370$)---and
-outperforms classical \texttt{DeepTSK-RuleNet} ($0.8086$, raw $p=0.010$) and
-\texttt{Dempster--Shafer} ($0.8115$, raw $p=0.032$). Pretrained in-context tabular
-\texttt{TabPFN~v2} achieves higher full-cohort discrimination ($0.8443$ AUROC on $N=1,137$,
-$q_{\text{BH}}=0.040$; $0.8541$ on $N_{\text{comp}}=854$), reflecting strong tabular prior
-capacity when clinical scores and missingness indicators co-occur. Crucially, however,
+\texttt{DeepFuzzyTorch} shows no statistically significant AUROC difference from the thirteen
+neural, evidential, fuzzy, and gradient-boosted tree comparators ($q_{\text{BH}}\ge 0.100$ on
+$N=1,137$; $q_{\text{BH}}\ge 0.180$ on $N_{\text{comp}}=854$). Several have slightly higher
+point estimates, including \texttt{FUML (adapted)} ($0.8363/0.8453$,
+$q_{\text{BH}}=0.260/0.368$) and \texttt{DDEF (adapted)} ($0.8323/0.8414$,
+$q_{\text{BH}}=0.769/0.895$), without significant differences. It shows nominal unadjusted
+$p<0.05$ versus \texttt{DeepTSK-RuleNet} ($0.8086$, raw $p=0.010$) and
+\texttt{Dempster--Shafer} ($0.8115$, raw $p=0.032$), which does not remain significant after
+BH multiplicity control ($q_{\text{BH}}=0.100$ and $q_{\text{BH}}=0.213$, respectively).
+Pretrained \texttt{TabPFN~v2} alone attains a statistically significant AUROC advantage
+($0.8443/0.8541$, $q_{\text{BH}}=0.040$), reflecting strong tabular prior capacity when
+clinical scores and missingness indicators co-occur. Crucially, however,
 single-table predictors (\texttt{XGBoost} MRR $0.8435$, \texttt{CatBoost} $0.8889$,
 \texttt{TabPFN~v2} $0.8974$) suffer marked missing-modality drops and lack explicit
 $C_{\mathcal{O}}$
@@ -1435,7 +1487,8 @@ architectures are in \textbf{bold} (see Table~\ref{tab:adni_main} for single-tab
 \shortstack{\textbf{Elig}\\\textbf{$N$}} & \shortstack{\textbf{Comp}\\\textbf{$N$}} &
 \shortstack{\textbf{Early}\\\textbf{Concat}} & \shortstack{\textbf{Gated}\\\textbf{Attn}} &
 \shortstack{\textbf{Eviden-}\\\textbf{tialDL}} & \shortstack{\textbf{RCML}\\\textbf{(adapt.)}}
-& \textbf{QMF} & \shortstack{\textbf{DrFuse}\\\textbf{(adapt.)}} &
+& \shortstack{\textbf{QMF}\\\textbf{(adapted)}} &
+\shortstack{\textbf{DrFuse}\\\textbf{(adapt.)}} &
 \shortstack{\textbf{DDEF}\\\textbf{(adapt.)}} & \shortstack{\textbf{FUML}\\\textbf{(adapt.)}} &
 \shortstack{\textbf{\texttt{DeepFuzzy}}\\\textbf{\texttt{Torch}}} &
 \shortstack{\textbf{Ours}\\\textbf{$\pi_{\text{fused}}$}} \\
@@ -1538,13 +1591,15 @@ ADNI Cohort~1 and all 7 subsets on TCGA Pan-Cancer ($N=2,946$). Across the nine 
 evidential, and fuzzy architectures in Table~\ref{tab:missing_15}, \texttt{FUML (adapted)}
 reaches $0.7790 / 0.7830$ macro AUROC (assisted by higher baseline 4-modality capacity), and
 \texttt{DeepFuzzyTorch} places second at $0.7764 / 0.7800$ while surpassing
-\texttt{EvidentialDL} ($0.7761$), \texttt{QMF} ($0.7759$), \texttt{RCML (adapted)} ($0.7742$),
+\texttt{EvidentialDL} ($0.7761$), \texttt{QMF (adapted)} ($0.7759$), \texttt{RCML (adapted)}
+($0.7742$),
 \texttt{DDEF (adapted)} ($0.7740$), \texttt{DrFuse (adapted)} ($0.7690$), \texttt{EarlyConcat}
 ($0.7690$), and \texttt{GatedAttention} ($0.7680$). Furthermore, \texttt{DeepFuzzyTorch}
 attains
 higher incomplete-subset retention ($\text{MRR} = 0.9344 / 0.9392$) than \texttt{FUML
 (adapted)}
-($0.9266$), \texttt{DDEF (adapted)} ($0.9250$), \texttt{QMF} ($0.9286$), \texttt{EvidentialDL}
+($0.9266$), \texttt{DDEF (adapted)} ($0.9250$), \texttt{QMF (adapted)} ($0.9286$),
+\texttt{EvidentialDL}
 ($0.9319$), \texttt{GatedAttention} ($0.9202$), and \texttt{DrFuse (adapted)} ($0.9193$), as
 well
 as single-table predictors \texttt{TabPFN~v2} ($0.7635 / 0.7668$, $\text{MRR}=0.8974$),
@@ -1617,7 +1672,7 @@ RCML (adapted, \textit{AAAI'24}) \cite{xu2024reliable} & \shortstack{0.9391\\(0.
 & 0.8728 & \shortstack{0.8585\\$\pm 0.0029$} & \shortstack{0.8691 /\\0.9269} &
 \shortstack{0.7500\\(114/152)} & \shortstack{0.8782 /\\\textbf{0.8868}} &
 \shortstack{0.8333\\(15/18)} \\
-QMF (Zhang et al., \textit{ICML'23}) \cite{zhang2023provable} &
+QMF (Zhang et al., \textit{ICML'23}, adapt.) \cite{zhang2023provable} &
 \shortstack{0.9396\\(0.9184--0.9566)} & 0.8747 & \shortstack{0.8547\\$\pm 0.0038$} &
 \shortstack{0.8553 /\\0.9156} & \shortstack{0.7945\\(116/146)} & \shortstack{0.8414 /\\0.8557}
 & \shortstack{0.8750\\(14/16)} \\
@@ -1655,7 +1710,11 @@ Participants ($n=198$, Strictly Nested Outer-Fold ECDF Calibration).} Raw traini
 retains only $32.3\%$ [$64/198$] and \texttt{XGBoost} $50.0\%$ [$99/198$]). Normalizing raw
 scores through strictly in-fold empirical cumulative distributions evaluates exact accuracy at
 matched retained coverages alongside full-curve Area Under the Risk--Coverage Curve (AURC
-$\downarrow$; paired bootstrap $p_{\text{AURC}}$ vs.\ \texttt{DeepFuzzyTorch} Composite).}
+$\downarrow$; unadjusted paired bootstrap $p_{\text{AURC}}$ vs.\ \texttt{DeepFuzzyTorch}
+Composite). Across the 11-comparator discordant referral family, BH-adjusted
+$q_{\text{BH}}\ge0.286$: $0.286$ for \texttt{TabPFN~v2} (raw $p=0.026$), $0.572$ for
+\texttt{RCML (adapted)} and \texttt{FUML (adapted)}, and $0.878$ for the remaining eight.
+No AURC difference is statistically significant after multiplicity correction.}
 \label{tab:matched_coverage}
 \scriptsize
 \setlength{\tabcolsep}{2.4pt}
@@ -1675,7 +1734,7 @@ EvidentialDL (TMC) \cite{han2022trusted} & 0.7643 (120/157, 79.3\%) & 0.1716 (0.
 0.7374 & 0.7640 & 0.7595 & 0.7632 & 0.7643 & 0.7647 \\
 RCML (adapted) \cite{xu2024reliable} & 0.7500 (114/152, 76.8\%) & 0.1942 (0.150) &
 0.7222 & 0.7453 & 0.7468 & 0.7500 & 0.7500 & 0.7731 \\
-QMF \cite{zhang2023provable} & 0.7945 (116/146, 73.7\%) & 0.1722 (0.792) &
+QMF (adapted) \cite{zhang2023provable} & 0.7945 (116/146, 73.7\%) & 0.1722 (0.792) &
 0.7475 & 0.7826 & 0.7848 & 0.7895 & 0.7929 & 0.8067 \\
 DrFuse (adapted) \cite{yao2024drfuse} & 0.7872 (111/141, 71.2\%) & 0.1753 (0.724) &
 0.7374 & 0.7888 & 0.7911 & 0.7895 & 0.7857 & 0.8151 \\
@@ -1716,7 +1775,7 @@ to $0.3254$, and the composite triage score $0.5\,C_{\mathcal{O}} + 0.5\,\pi_{\t
 discriminates corrupted from clean samples with $0.6542$ AUROC (Figure~\ref{fig:conflict}(b)).
 Separating the two components reveals why: pure observed-pair conflict $C_{\mathcal{O}}$
 achieves
-\textbf{0.7000} anomaly AUROC---outperforming \texttt{QMF} ($0.6667$),
+\textbf{0.7000} anomaly AUROC---outperforming \texttt{QMF (adapted)} ($0.6667$),
 \texttt{DrFuse (adapted)}
 ($0.6602$), \texttt{DDEF (adapted)} ($0.5888$ composite / $0.6892$ conflict-only), \texttt{FUML
 (adapted)} ($0.5266$ / $0.6644$), \texttt{RCML (adapted)} ($0.6455$ / $0.6857$),
@@ -1729,21 +1788,24 @@ C_{\mathcal{O}}$ (Figure~\ref{fig:conflict}(c)), referring the top 20\%
 highest-scoring cases restores retained-cohort diagnostic AUROC from $0.8062$ to $0.8302$ (and
 to $0.8606$ at 40\% referral; $0.8307$ via pure $\pi_{\text{fused}}$ and $0.8136$ via pure
 $C_{\mathcal{O}}$). At 20\% referral, \texttt{DeepFuzzyTorch} ($0.8302$) surpasses
-\texttt{GatedAttention} ($0.8252$), \texttt{XGBoost} ($0.8256$), \texttt{QMF} ($0.8212$),
+\texttt{GatedAttention} ($0.8252$), \texttt{XGBoost} ($0.8256$), \texttt{QMF (adapted)}
+($0.8212$),
 \texttt{DrFuse (adapted)} ($0.8211$), \texttt{EvidentialDL} ($0.8178$), \texttt{EarlyConcat}
 ($0.8176$), \texttt{RCML (adapted)} ($0.8127$), \texttt{LateAvg} ($0.8076$),
 \texttt{DempsterShafer} ($0.7868$), and \texttt{DeepTSK} ($0.7831$), while tracking
 \texttt{CatBoost} ($0.8379$), \texttt{TabPFN~v2} ($0.8325$), \texttt{DDEF (adapted)}
 ($0.8308$), and \texttt{FUML (adapted)} ($0.8307$). Furthermore, on full ADNI Cohort~1 without
-synthetic
-swaps ($N=1,137$), matched-coverage nested-ECDF selective referral raises
-\texttt{DeepFuzzyTorch}
-accuracy to $0.7840$ (90\%), $0.8055$ (80\%), and $0.8229$ (70\%; $\text{AURC}=0.1322$),
-trailing only \texttt{TabPFN~v2} ($0.8209$ at 80\%, $\text{AURC}=0.1101$) while outperforming
-or
-matching all thirteen remaining comparators at 80\% coverage (\texttt{GatedAttention} $0.8044$,
-\texttt{DDEF} $0.8011$, \texttt{FUML} $0.7989$, \texttt{XGBoost} $0.7945$, \texttt{CatBoost}
-$0.7923$).
+synthetic swaps ($N=1,137$), equal-coverage raw
+out-of-fold composite ranking ($0.5\,\pi_{\text{fused}}+0.5\,C_{\mathcal{O}}$) yields
+\texttt{DeepFuzzyTorch} accuracy of $0.7840$ (90\%), $0.8055$ (80\%), and $0.8229$ (70\%;
+$\text{AURC}=0.1322$). This raw full-cohort ranking differs from the strictly nested outer-fold
+training ECDF procedure in Table~\ref{tab:matched_coverage} for $n=198$ discordant
+participants,
+and from the full-cohort pure-hesitancy $\text{AURC}=0.1335$ in
+Tables~\ref{tab:adni_main}--\ref{tab:ablation}. At 80\% coverage, \texttt{TabPFN~v2} scores
+$0.8209$ (AURC $0.1101$); \texttt{GatedAttention}, \texttt{DDEF (adapted)},
+\texttt{FUML (adapted)}, \texttt{XGBoost}, and \texttt{CatBoost} score $0.8044$, $0.8011$,
+$0.7989$, $0.7945$, and $0.7923$, respectively.
 
 To audit real-world cross-modal contradiction without synthetic perturbation or quantile
 leakage, we define biomarker discordance strictly using training-fold medians across ADNI
@@ -1773,10 +1835,15 @@ calibration
 shrinkage artifact: at $81.3\%$ ($161/198$) and $80\%$ ($158/198$) retained coverage,
 \texttt{DeepFuzzyTorch} composite achieves $0.7764 / 0.7785$ ($\text{AURC}=0.1671$) and pure
 $C_{\mathcal{O}}$ ECDF reaches $0.7826 / 0.7911$, outperforming \texttt{CatBoost} ($0.7516 /
-0.7595$), \texttt{XGBoost} ($0.7391 / 0.7468$), \texttt{DDEF} ($0.7516 / 0.7595$),
-\texttt{RCML} ($0.7453 / 0.7468$), and \texttt{FUML} ($0.7391 / 0.7342$), while trailing
-\texttt{TabPFN~v2} ($0.8012 / 0.8101$, $\text{AURC}=0.1248$, $p=0.026$) and matching
-\texttt{QMF} ($0.7826 / 0.7848$) and \texttt{DrFuse} ($0.7888 / 0.7911$).
+0.7595$), \texttt{XGBoost} ($0.7391 / 0.7468$), \texttt{DDEF (adapted)} ($0.7516 / 0.7595$),
+\texttt{RCML (adapted)} ($0.7453 / 0.7468$), and \texttt{FUML (adapted)} ($0.7391 / 0.7342$),
+while trailing
+\texttt{TabPFN~v2} ($0.8012 / 0.8101$, $\text{AURC}=0.1248$, unadjusted paired bootstrap
+$p=0.026$,
+$q_{\text{BH}}=0.286$) and matching
+\texttt{QMF (adapted)} ($0.7826 / 0.7848$) and \texttt{DrFuse (adapted)} ($0.7888 / 0.7911$).
+Across all 11
+comparator AURC tests, $q_{\text{BH}}\ge0.286$; none is significant after BH correction.
 
 On ADNI Cohort~2 ($N=289$, Table~\ref{tab:external_ckd}), where high-specificity plasma pTau217
 already provides strong unimodal signal (\texttt{UnimodalPlasma\_pTau217} AUROC $0.8739$),
@@ -1791,17 +1858,19 @@ statistically
 significant pairwise AUROC differences ($q_{\text{BH}} \ge 0.602$ across all twelve
 comparators).
 As an exploratory physiological proof-of-concept within the small measured chronic kidney
-disease subgroup ($\text{eGFR}<60$, $n=22$ total: $n=6$ A$\beta^-$ and $n=16$ A$\beta^+$),
+disease subgroup (low baseline eGFR $<60\text{ mL/min/1.73m}^2$, single baseline
+measurement; $n=22$ total: $n=6$ exploratory A$\beta^-$ CKD and $n=16$ A$\beta^+$),
 A$\beta^-$ CKD subjects ($n=6$) display elevated mean plasma pTau217 ($0.2618$ vs.\
 $0.1546\text{ pg/mL}$) and GFAP ($205.7$ vs.\ $164.1\text{ pg/mL}$) relative to A$\beta^-$
-normal-renal subjects ($n=22$), driving $3.58\times$ higher directional
+normal-renal subjects ($n=22$), accompanied by $3.58\times$ higher directional
 plasma-versus-non-plasma conflict $\mu_{\text{Plasma}}\cdot
 \frac{1}{3}(\nu_{\text{MRI}}+\nu_{\text{FDG}}+\nu_{\text{Clin}})$ ($0.1932$ vs.\ $0.0539$,
 two-sided Mann--Whitney $p = 0.0448$). Under symmetric in-fold 80th-percentile composite triage
 on $n=22$, retained accuracy rises from $0.7727$ ($17/22$) to $0.8421$ ($16/19$, exact 95\%
 CI: 0.6042--0.9662; hesitancy-only $0.8000$ [$16/20$]) for \texttt{DeepFuzzyTorch} and
 \texttt{EvidentialDL}. This compares with $0.9333$ ($14/15$) for \texttt{DrFuse (adapted)},
-$0.8750$ ($14/16$) for \texttt{QMF}, $0.8500$ ($17/20$) for \texttt{EarlyConcat}, $0.8333$
+$0.8750$ ($14/16$) for \texttt{QMF (adapted)}, $0.8500$ ($17/20$) for \texttt{EarlyConcat},
+$0.8333$
 ($15/18$) for \texttt{RCML (adapted)} and \texttt{GatedAttention}, and $0.7727 \to 0.8000$
 ($16/20$) for \texttt{PlasmaOnly}; given the wide binomial CIs at $n=22$, this renal subgroup
 is strictly hypothesis-generating.
@@ -1817,7 +1886,11 @@ Fuzzy_Rough_Reduct_and_MultiOmics_FM.pdf}
     inner-split composite objective peak ($\text{AUROC}_{\text{val}} +
     0.05\Delta\gamma_{\mathcal{B}_k} - 0.0008k$ at $k=20$). \textbf{(b)} Top-ranked FreeSurfer
     biomarkers by univariate dependency. \textbf{(c)} Per-cohort AUROC across 7 TCGA cancer
-    types. \textbf{(d)} Six-foundation-model pathology consensus on Camelyon17 and NCT-CRC.}
+    types. \textbf{(d)} Six-foundation-model pathology consensus on Camelyon17 and the NCT-CRC
+    binary tumor-or-stroma endpoint (\texttt{is\_tumor\_or\_stroma}) derived from the 9-class
+    NCT-CRC-HE-100K / CRC-VAL-HE-7K dataset. Corruption applies a $-2\times$ sign-and-scale
+    inversion to standardized PCA-64
+    features on the held-out \texttt{plip} expert stream.}
     \label{fig:rough_tcga}
 \end{figure*}
 
@@ -1853,8 +1926,11 @@ baselines and Classical vs.\ Fuzzy-Rough feature selectors ($K^*=20$, reporting 
 Jaccard stability and full-cohort RNA-only AUROC [$N=2,946$] in text). Bottom: 6-FM patch/tile
 AUROC comparing source-CV \texttt{BestSingleFM} (\texttt{uni2\_h}), \texttt{MeanPool},
 \texttt{MedianPool}, \texttt{Logit-Tent (adapted)} (\textit{ICLR'21}), source-OOF Adam-fitted
-\texttt{HesitantFuzzy}, and \texttt{HesitantFuzzy + PFS TTA}. Boldface marks mathematical
-column/row winners.}
+\texttt{HesitantFuzzy}, and \texttt{HesitantFuzzy + PFS TTA}. NCT-CRC evaluates the binary
+\texttt{is\_tumor\_or\_stroma} endpoint derived from the 9-class NCT-CRC-HE-100K /
+CRC-VAL-HE-7K dataset. The corrupted
+scenario applies $-2\times$ sign-and-scale inversion to standardized PCA-64 features on the
+held-out \texttt{plip} expert stream. Boldface marks mathematical column/row winners.}
 \label{tab:tcga_fm}
 \scriptsize
 \renewcommand{\arraystretch}{0.84}
@@ -1878,7 +1954,8 @@ EvidentialDL (TMC, \textit{TPAMI'23}, 3-Mod) \cite{han2022trusted} &
 \textbf{0.6553} & 0.6673 \\
 RCML (adapted, \textit{AAAI'24}, 3-Mod) \cite{xu2024reliable} & 0.7322 (0.7129--0.7504) &
 0.7350 & 0.6931 & 0.6688 & 0.7266 & 0.7998 & 0.6955 & 0.6418 & 0.6525 & 0.6325 \\
-QMF (\textit{ICML'23}, 3-Mod) \cite{zhang2023provable} & 0.7321 (0.7116--0.7500) & 0.7276 &
+QMF (\textit{ICML'23}, adapt., 3-Mod) \cite{zhang2023provable} & 0.7321 (0.7116--0.7500) &
+0.7276 &
 0.6898 & 0.6680 & 0.7147 & 0.8000 & 0.7013 & 0.6361 & 0.6534 & 0.6517 \\
 DrFuse (adapted, \textit{AAAI'24}, 3-Mod) \cite{yao2024drfuse} & 0.7376 (0.7177--0.7546) &
 0.7227 & 0.6838 & 0.7043 & 0.7020 & 0.8204 & 0.6770 & 0.6410 & 0.6435 & \textbf{0.6729} \\
@@ -1894,7 +1971,8 @@ GatedAttention (4-Mod, $K^*=20$) \cite{arevalo2017gated} & 0.7218 (0.7018--0.738
 --- & --- & --- & --- & --- & --- & --- & --- \\
 EarlyConcat-MLP (4-Mod, $K^*=20$) \cite{baltrusaitis2018multimodal} & 0.7320 (0.7116--0.7492) &
 0.7365 & --- & --- & --- & --- & --- & --- & --- & --- \\
-QMF (\textit{ICML'23}, 4-Mod, $K^*=20$) \cite{zhang2023provable} & 0.7338 (0.7145--0.7511) &
+QMF (\textit{ICML'23}, adapt., 4-Mod, $K^*=20$) \cite{zhang2023provable} & 0.7338
+(0.7145--0.7511) &
 0.7330 & --- & --- & --- & --- & --- & --- & --- & --- \\
 DrFuse (adapted, \textit{AAAI'24}, 4-Mod, $K^*=20$) \cite{yao2024drfuse} &
 0.7340 (0.7152--0.7522) & 0.7284 & --- & --- & --- & --- & --- & --- & --- & --- \\
@@ -1937,15 +2015,19 @@ Camelyon17 ($N=2,500$ Patches: Source $n=1,500 \to$ OOD $n=1,000$, Clean) & \tex
 0.9915 & 0.9909 & 0.9914 & 0.9919 & 0.9919 (0.9878--0.9956) \\
 Camelyon17 ($n=1,000$ OOD Patches, 1 Corrupted Foundation Model) & \textbf{0.9942} & 0.9894 &
 0.9912 & 0.9893 & 0.9922 & 0.9925 (0.9878--0.9962)$^\dagger$ \\
-NCT-CRC (\texttt{Discovery} $n=999 \to$ External \texttt{VAL\_7K} $n=1,350$ Tiles, Clean) &
+NCT-CRC Binary (\texttt{Discovery} $n=999 \to$ External \texttt{VAL\_7K} $n=1,350$ Tiles,
+Clean) &
 0.9760 & \textbf{0.9825} & 0.9818 & 0.9823 & 0.9814 & 0.9815 (0.9753--0.9871) \\
-NCT-CRC ($n=1,350$ External Tiles, 1 Corrupted Foundation Model) & 0.9760 & 0.9567 &
+NCT-CRC Binary ($n=1,350$ External Tiles, 1 Corrupted Foundation Model) & 0.9760 & 0.9567 &
 \textbf{0.9812} & 0.9561 & 0.9781 & 0.9804 (0.9739--0.9865) \\
 \bottomrule
 \multicolumn{7}{@{}p{1.05\textwidth}@{}}{\scriptsize $^\dagger$Highest AUROC among all 6-FM
 multi-model ensemble/TTA methods on corrupted Camelyon17 ($q_{\text{BH}}=0.010$ vs.\
 \texttt{MeanPool} and \texttt{Logit-Tent (adapted)}); uncorrupted \texttt{uni2\_h} serves as
-single-FM reference.}
+single-FM reference. NCT-CRC Binary is the \texttt{is\_tumor\_or\_stroma} endpoint derived
+from the 9-class NCT-CRC-HE-100K / CRC-VAL-HE-7K dataset. Corruption is a $-2\times$
+sign-and-scale inversion of standardized PCA-64 features on the held-out \texttt{plip}
+expert stream.}
 \end{tabular}%
 }
 \end{table*}
@@ -2023,7 +2105,8 @@ $q_{\text{BH}}=0.0025$) and \texttt{LateAvg} ($0.7285$, $q_{\text{BH}}=0.0025$).
 remaining top-20 4-modality variants, \texttt{FuzzyRough-20} modestly edges 3-modality fusion
 ($0.7377 \to 0.7403$) as well as 4-modality \texttt{EvidentialDL} ($0.7377$),
 \texttt{DempsterShafer} ($0.7373$), \texttt{RCML (adapted)} ($0.7350$),
-\texttt{DrFuse (adapted)} ($0.7340$), and \texttt{QMF} ($0.7338$; $q_{\text{BH}} \ge 0.124$).
+\texttt{DrFuse (adapted)} ($0.7340$), and \texttt{QMF (adapted)} ($0.7338$; $q_{\text{BH}} \ge
+0.124$).
 Comparing feature selectors inside \texttt{DeepFuzzyTorch} highlights a transparent
 sparsity--stability trade-off: dense linear \texttt{PCA-20} achieves the highest overall
 4-modality AUROC (\textbf{0.7450}, full-cohort [$N=2,946$] RNA-only 0.6618,
@@ -2040,10 +2123,13 @@ stability than \texttt{Lasso-20} ($0.1985$).
 Table~\ref{tab:tcga_fm} (bottom) and Figure~\ref{fig:rough_tcga}(d) evaluate 6-foundation-model
 (\texttt{uni2\_h}, \texttt{phikon\_v2}, \texttt{kaiko\_vitl14}, \texttt{phikon},
 \texttt{ctranspath}, \texttt{plip}) consensus using in-fold PCA-64 logistic probes under clean
-shift and single-FM sign-inversion corruption. On uncorrupted OOD targets, source-CV
+shift and single-expert corruption: a $-2\times$ sign-and-scale inversion of standardized
+PCA-64 features on the held-out \texttt{plip} stream. On uncorrupted OOD targets, source-CV
 \texttt{BestSingleFM} (\texttt{uni2\_h}) leads on Camelyon17 (\textbf{0.9942} vs.\ $0.9919$ for
 \texttt{HesitantFuzzy + PFS TTA} and $0.9915$ for \texttt{MeanPool}), whereas multi-FM
-ensembles outperform \texttt{BestSingleFM} ($0.9760$) on external 9-class NCT-CRC
+ensembles outperform \texttt{BestSingleFM} ($0.9760$) on the external binary
+NCT-CRC tumor-or-stroma endpoint (\texttt{is\_tumor\_or\_stroma}) derived from the 9-class
+NCT-CRC-HE-100K / CRC-VAL-HE-7K dataset
 (\texttt{MeanPool} \textbf{0.9825}, \texttt{Logit-Tent (adapted)} $0.9823$, \texttt{MedianPool}
 $0.9818$, \texttt{HesitantFuzzy + PFS TTA} $0.9815$, $q_{\text{BH}}=0.0050$ vs.\
 \texttt{BestSingleFM}). Crucially, when one foundation model suffers test-time corruption, both
@@ -2066,8 +2152,10 @@ Clinical_DCA_Calibration_and_TSK_Rules.pdf}
     \caption{\textbf{Clinical utility, white-box TSK auditability, and longitudinal
     conversion.} \textbf{(a)} Decision curve analysis over $p_t \in [0.05, 0.80]$. \textbf{(b)}
     Eight-bin reliability diagram (legend reports 10-bin $\text{ECE}_{10}$ from
-    Table~\ref{tab:adni_main}). \textbf{(c)} Effective gated antecedent centers $g_{r,c}\cdot
-    c_{r,c}$ of the $R=6$ Fold~0 TSK rules. \textbf{(d)} Kaplan--Meier dementia-free survival
+    Table~\ref{tab:adni_main}). \textbf{(c)} Gate--center products $g_{r,c}\cdot c_{r,c}$ of
+    the $R=6$ Fold~0 TSK rules
+    (firing distances in Eq.~\eqref{eq:tsk_firing} use raw centers $c_{r,c}$). \textbf{(d)}
+    Kaplan--Meier dementia-free survival
     across strict in-fold risk tertiles on ADNI ($N=1,017$).}
     \label{fig:clinical}
 \end{figure*}
@@ -2096,7 +2184,8 @@ EvidentialDL (TMC) \cite{han2022trusted} & \textbf{20,168} & 1.35 & 0.29 & 1.96 
 \\
 RCML (\textit{AAAI'24}, adapt.) \cite{xu2024reliable} & 20,172 & 1.18 & 0.29 & \textbf{1.96} &
 0.59 & 1.52 \\
-QMF (\textit{ICML'23}) \cite{zhang2023provable} & 20,176 & 0.98 & 0.30 & 2.12 & 0.59 & 1.04 \\
+QMF (\textit{ICML'23}, adapt.) \cite{zhang2023provable} & 20,176 & 0.98 & 0.30 & 2.12 & 0.59 &
+1.04 \\
 GatedAttention \cite{arevalo2017gated} & 30,722 & 1.81 & 0.56 & 4.34 & 1.43 & 2.23 \\
 DrFuse (\textit{AAAI'24}, adapt.) \cite{yao2024drfuse} & 50,934 & 2.96 & 0.88 & 7.84 & 2.52 &
 3.79 \\
@@ -2141,12 +2230,12 @@ THEN Logit = +0.14157306 +0.16437314*MRI\_NetSupport +0.13232474*Plasma\_NetSupp
 On Track~3A dated ADNI longitudinal conversion ($N=1,017$, 268 incident events; known 60-month
 cohort $N=716$; Table~\ref{tab:external_ckd} and Figure~\ref{fig:clinical}(d)),
 \texttt{DeepFuzzyTorch} achieves the highest 60-month conversion AUROC of \textbf{0.9419} (95\%
-CI: 0.9200--0.9589 vs.\ \texttt{QMF} 0.9396, \texttt{RCML (adapted)} 0.9391,
+CI: 0.9200--0.9589 vs.\ \texttt{QMF (adapted)} 0.9396, \texttt{RCML (adapted)} 0.9391,
 \texttt{EarlyConcat} 0.9373, \texttt{EvidentialDL} 0.9338, \texttt{DrFuse (adapted)} 0.9322,
 and \texttt{GatedAttention} 0.9304). It also attains the highest full-cohort AUROC of
 \textbf{0.8682} (95\%
 CI: 0.8431--0.8930; $q_{\text{BH}}=0.012$ vs.\ \texttt{RCML (adapted)} 0.8546,
-\texttt{DrFuse (adapted)} 0.8536, and \texttt{QMF} 0.8471) and highest C-index of
+\texttt{DrFuse (adapted)} 0.8536, and \texttt{QMF (adapted)} 0.8471) and highest C-index of
 \textbf{0.8804}. Stratifying OOF risk by strict training-fold tertiles ($33.33\%$ and $66.67\%$
 cutoffs fit per fold: mean $0.159$ and $0.307$; Low $n=335$, Intermediate $n=339$, High
 $n=343$) yields clean 10-year dementia-free survival separation (High-vs-Low log-rank $\chi^2 =
@@ -2157,7 +2246,8 @@ $n=343$) yields clean 10-year dementia-free survival separation (High-vs-Low log
 CI: 0.8314--0.8927]; $q_{\text{BH}}=0.024\text{--}0.028$ vs.\ \texttt{DrFuse (adapted)},
 \texttt{GatedAttention}, and \texttt{EarlyConcat}; $q_{\text{BH}}=0.443\text{--}0.479$ vs.\
 \texttt{RCML (adapted)} $0.8585 \pm 0.0029$, \texttt{EvidentialDL} $0.8572 \pm 0.0037$, and
-\texttt{QMF} $0.8547 \pm 0.0038$). It also leads under the strict baseline AD dementia source
+\texttt{QMF (adapted)} $0.8547 \pm 0.0038$). It also leads under the strict baseline AD
+dementia source
 sensitivity check (\textbf{0.8603} [0.8305--0.8882], 5-seed \textbf{0.8599 $\pm$ 0.0011}), and
 matches top baselines on UDS-D1-concordant subjects ($n=814$: \texttt{RCML (adapted)} 0.9157,
 \texttt{EvidentialDL} 0.9152, \texttt{DeepFuzzyTorch} 0.9147 [0.8803--0.9423]). Moreover, it
@@ -2171,44 +2261,40 @@ $\mathcal{O}(2^M)$ subset enumeration. Although its rule-auditable TSK and pairw
 modules incur moderately higher forward inference latency than single-layer cross-modal
 attention \texttt{DrFuse (adapted)} ($3.47$ vs.\ $2.52\,\text{ms}$ at $N=1,024$; $4.67$ vs.\
 $3.79\,\text{ms}$ at $M=16$; $8.66$ vs.\ $8.35\,\text{ms}$ at $N=4,096$),
-\texttt{DeepFuzzyTorch} consistently requires $18\text{--}21\%$ lower peak live CPU tensor
-memory ($6.31$ vs.\ $7.84\,\text{MiB}$, $24.52$ vs.\ $30.80\,\text{MiB}$, $25.79$ vs.\
-$31.55\,\text{MiB}$, and $97.36$ vs.\ $122.61\,\text{MiB}$ across $N=256, 1,024$, $M=16$, and
-$N=4,096$). Moreover, \texttt{DeepFuzzyTorch} matches \texttt{DrFuse (adapted)} in
-forward-plus-backward latency at $N=4,096$ ($26.60$ vs.\ $26.62\,\text{ms}$) and runs faster
-at $D_m=5,000$ ($15.21$ vs.\ $20.99\,\text{ms}$ raw, dropping to $4.90\,\text{ms}$ and
-$4.62\,\text{MiB}$ after $K^*=20$ reduction), while offline in-fold
-\texttt{FuzzyRoughFeatureReducer} fitting on $D=1,000$ features requires $0.33\,\text{s}$ at
-$N=256$ and $2.19\,\text{s}$ at $N=1,024$.
+\texttt{DeepFuzzyTorch} requires $18\text{--}21\%$ lower peak live CPU tensor memory at
+$D_m=100$ across $N=256, 1,024$, $M=16$, and $N=4,096$ ($6.31$ vs.\ $7.84\,\text{MiB}$,
+$24.52$ vs.\ $30.80\,\text{MiB}$, $25.79$ vs.\ $31.55\,\text{MiB}$, and $97.36$ vs.\
+$122.61\,\text{MiB}$). It matches \texttt{DrFuse (adapted)} in forward-plus-backward latency at
+$N=4,096$ ($26.60$ vs.\ $26.62\,\text{ms}$). In the unreduced high-dimensional synthetic test
+($D_m=5,000$, $N=256$, $M=4$), \texttt{DeepFuzzyTorch} uses more live tensor memory than
+\texttt{DrFuse (adapted)} ($123.11$ vs.\ $92.31\,\text{MiB}$), while its raw neural step is
+$15.21$ vs.\ $20.99\,\text{ms}$. After $K^*=20$ reduction, the $4.90\,\text{ms}$ and
+$4.62\,\text{MiB}$ neural step excludes offline CPU \texttt{FuzzyRoughFeatureReducer} fitting,
+which costs $2.19\,\text{s}$ and $489.5\,\text{MiB}$ at $N=1,024$, $D=1,000$ (and
+$0.33\,\text{s}$ at $N=256$).
 
 
 \FloatBarrier
 \section{Discussion}
 \label{sec:discussion}
 
-\noindent\textbf{When axiomatic fuzzy-rough priors match versus outperform modern deep fusion.}
-Our six-track benchmark provides a transparent picture of both parity and structural advantage
-relative to fourteen multimodal and tabular comparators---including recent 2023--2025 neural
-and fuzzy fusion models (\texttt{QMF} \cite{zhang2023provable}, \texttt{RCML}
-\cite{xu2024reliable}, \texttt{DrFuse} \cite{yao2024drfuse}, \texttt{DDEF}
-\cite{shao2024dual}, and \texttt{FUML} \cite{duan2025fuml}) as well as strong tabular
-predictors (\texttt{XGBoost}, \texttt{CatBoost}, and \texttt{TabPFN~v2}
-\cite{hollmann2025tabpfn}). On baseline cohorts (ADNI Cohort~1 natural-missingness $N=1,137$,
-complete 4-modality subset $N_{\text{comp}}=854$, ADNI Cohort~2 plasma pTau217, and 3-modality
-TCGA), \texttt{DeepFuzzyTorch} maintains parity ($q_{\text{BH}} \ge 0.100$ on $N=1,137$ and
-$q_{\text{BH}} \ge 0.180$ on $N_{\text{comp}}=854$ across all thirteen neural, evidential, and
-GBDT comparators), trailing only pretrained \texttt{TabPFN~v2} on ADNI Cohort~1 ($0.8443$ vs.\
-$0.8270$, $q_{\text{BH}}=0.040$). Conversely, under clinical data imperfections, three
-axiomatic guarantees translate into consistent operational advantages. First, decoupling
-unimodal intuitionistic encoding from certainty-ordered Choquet aggregation and concept-masked
-TSK inference enforces exact \texttt{0.00} fixed-width padding vacuity invariance
-(Theorem~\ref{thm:degeneration} and Corollary~\ref{cor:e2e_vacuity}), preventing the steep
-neuroimaging-only collapse seen in cross-modal attention (\texttt{DrFuse},
-\texttt{GatedAttention})
-and tabular predictors (\texttt{XGBoost} MRR $0.8435$, \texttt{CatBoost} $0.8889$,
-\texttt{TabPFN~v2} $0.8974$), while maintaining strong incomplete-subset retention
-($\text{MRR}=0.9344$; 15-subset macro AUROC $0.7764$ alongside \texttt{FUML} at $0.7790$).
-Second, unlike Dempster's normalization or zero-vetoing IFWA, conflict-discounted
+\noindent\textbf{Empirical performance and structural guarantees.}
+On ADNI Cohort~1, \texttt{DeepFuzzyTorch} shows no statistically significant AUROC difference
+after Benjamini--Hochberg correction from thirteen neural, evidential, fuzzy, and GBDT
+comparators ($N=1,137$: $0.8270$, $q_{\text{BH}}\ge0.100$; $N_{\text{comp}}=854$: $0.8371$,
+$q_{\text{BH}}\ge0.180$). Several comparators have higher point estimates, including
+\texttt{FUML (adapted)} ($0.8363/0.8453$) and \texttt{DDEF (adapted)} ($0.8323/0.8414$),
+without significant differences; pretrained \texttt{TabPFN~v2} alone has a significant AUROC
+advantage ($0.8443/0.8541$, $q_{\text{BH}}=0.040$).
+
+Theorem~\ref{thm:degeneration} and Corollary~\ref{cor:e2e_vacuity} eliminate arbitrary
+fill-value bias on already-unacquired slots, with $0.00$ fixed-width padding sensitivity.
+Separately, the higher empirical incomplete-subset retention observed on ADNI
+($\text{MRR}=0.9344$; 15-subset macro AUROC $0.7764$) relative to single-table GBDTs and
+\texttt{TabPFN~v2} reflects the architecture's decoupled modality-specific encoders and
+certainty-ordered Choquet re-normalization over observed cohorts. Algebraic vacuity alone does
+not guarantee downstream accuracy. The structural and empirical observations are distinct.
+Unlike Dempster's normalization or zero-vetoing IFWA, conflict-discounted
 geometric-hesitancy pooling routes cross-polarity contradiction $C_{\mathcal{O}}$ into
 $\pi_{\text{fused}}$ (Theorem~\ref{thm:conflict}): pure $C_{\mathcal{O}}$ detects $\gamma=0.8$
 swaps at \textbf{0.7000} AUROC (vs.\ $0.6542$ composite and $0.5337$ pure $\pi_{\text{fused}}$)
@@ -2217,13 +2303,16 @@ matched-coverage nested ECDF referral ($n=198$), it raises accuracy from $0.7475
 ($0.7826$ via pure $C_{\mathcal{O}}$; $0.7911$ at $80\%$), eliminating GBDT threshold shrinkage
 ($32.3\%$--$50.0\%$ retained), alongside top 60-month conversion AUROC (\textbf{0.9419},
 C-index \textbf{0.8804}) and top 5-seed zero-shot OASIS-3 transfer (\textbf{0.8639 $\pm$
-0.0010}; $\text{CDR}\ge 0.5$ \textbf{0.8810 / 0.9356}). Third, supervised
+0.0010}; $\text{CDR}\ge 0.5$ \textbf{0.8810 / 0.9356}). Supervised
 in-fold pointwise T-norm fuzzy-rough reduction compresses 320 MRI ROIs to 24 and 1,000
 label-free transductive MAD transcripts to a fixed budget $K^*=20$ ($98.0\%$ compression,
 preventing matched-architecture \texttt{All-1000} overfitting from $0.6925$ to $0.7403$,
 $q_{\text{BH}}=0.0025$) with $3.61\times$ higher cross-fold Jaccard stability than mutual
-information ($0.3816$ vs.\ $0.1058$), while \texttt{DeepConceptTSKHead} exports exact 8-decimal
-clinical rules ($2.384 \times 10^{-7}$ error). Similarly, in 6-FM pathology consensus, while
+information ($0.3816$ vs.\ $0.1058$). Full-precision masked submodel restriction is
+algebraically exact in real arithmetic. Decimal rounding changes the represented real function;
+\texttt{DeepConceptTSKHead} 8-decimal text export has empirical reconstruction discrepancy
+$2.384 \times 10^{-7}$ ($\le2.39 \times 10^{-7}$) on ADNI Fold~0 validation examples,
+scaling as $\max_r\|\bm{w}_r\|_1\cdot10^{-8}$. Similarly, in 6-FM pathology consensus, while
 \texttt{BestSingleFM} or \texttt{MeanPool} suffice on clean shifts, \texttt{HesitantFuzzy + PFS
 TTA} prevents single-FM corruption collapse (\textbf{0.9925} on Camelyon17 and \textbf{0.9804}
 on NCT-CRC vs.\ \texttt{Logit-Tent (adapted)} $0.9893$ and $0.9561$).
@@ -2242,7 +2331,8 @@ panels when desired. Second, under gentle sparsity regularization ($\lambda_{\te
 \texttt{DeepConceptTSKHead} learns smooth differential concept gates ($g_{r,c} \in [0.689,
 0.766]$) rather than hard-zero rule pruning; applications requiring ultra-compact 2--3 variable
 rules can apply post-hoc gate thresholding or stronger $L_1$ penalties. Third, the ADNI
-Cohort~2 renal subgroup ($n=22$ measured CKD, including $n=6$ A$\beta^-$ CKD) carries wide
+Cohort~2 renal subgroup (low baseline eGFR $<60\text{ mL/min/1.73m}^2$, single baseline
+measurement; $n=22$ measured CKD, including $n=6$ exploratory A$\beta^-$ CKD) carries wide
 Clopper--Pearson confidence intervals and is strictly exploratory. Finally, survival endpoints
 use maturity-weighted binary targets rather than Cox partial likelihoods, and Track~5 evaluates
 full-batch transductive TTA at the patch/tile level because upstream feature caches omit
@@ -2255,8 +2345,10 @@ differentiable intuitionistic, hesitant, and rough fuzzy framework for incomplet
 conflicting multimodal biomedical fusion. The library is grounded in five mathematical theorems
 (plus end-to-end concept-masked invariance Corollary~\ref{cor:e2e_vacuity}) and validated
 across six benchmarks spanning 5,356 unique clinical/oncology participants and 4,849
-histopathology patch/tile records against fourteen comparators including \texttt{QMF},
-\texttt{RCML}, \texttt{DrFuse}, \texttt{DDEF}, \texttt{FUML}, \texttt{XGBoost},
+histopathology patch/tile records against fourteen comparators including
+\texttt{QMF (adapted)},
+\texttt{RCML (adapted)}, \texttt{DrFuse (adapted)}, \texttt{DDEF (adapted)}, \texttt{FUML
+(adapted)}, \texttt{XGBoost},
 \texttt{CatBoost},
 \texttt{TabPFN~v2}, and \texttt{Logit-Tent (adapted)}. Across these evaluations,
 \texttt{DeepFuzzyTorch} delivers competitive baseline discrimination on natural-missingness
@@ -2319,7 +2411,8 @@ patch/tile records (full provenance in Appendix~\ref{app:provenance}).
     Across 7 Cohorts):} Patient-level records across \texttt{BRCA}, \texttt{COAD},
     \texttt{KIRC}, \texttt{KIRP}, \texttt{LUAD}, \texttt{LUSC}, and \texttt{UCEC} combine
     3,072-D slide-level WSI descriptors (concatenated 1,536-D slide-mean and 1,536-D slide-SD
-    UNI2-h \cite{chen2024uni} embeddings reduced via in-fold 48-component PCA), 10 cBioPortal
+    UNI2-h embeddings from the updated release built upon the UNI framework \cite{chen2024uni},
+    reduced via in-fold 48-component PCA), 10 cBioPortal
     \cite{cerami2012cbioportal} genomic instability/hypoxia signatures, and pathologic staging
     with demographics. In the 4-modality track, we add an unsupervised, label-free transductive
     PanCanAtlas RNA-Seq universe containing the top-$1,000$ MAD expressed protein-coding genes
@@ -2332,13 +2425,18 @@ patch/tile records (full provenance in Appendix~\ref{app:provenance}).
     \cite{milacic2024reactome}.
     \item \textbf{Multi-Foundation-Model Pathology Consensus \& Unsupervised Transductive TTA
     ($N=4,849$ Patches/Tiles, 6 FMs):} Pre-extracted features from 6 pathology foundation
-    models (\texttt{uni2\_h} \cite{chen2024uni} [$1,536$-D], \texttt{phikon\_v2}
+    models (\texttt{uni2\_h}, the updated UNI2-h release built on UNI \cite{chen2024uni}
+    [$1,536$-D], \texttt{phikon\_v2}
     \cite{filiot2024phikonv2} [$1,024$-D], \texttt{kaiko\_\allowbreak vitl14}
     \cite{kaiko2024towards} [$1,024$-D], \texttt{phikon} \cite{filiot2023scaling} [$768$-D],
     \texttt{ctranspath} \cite{wang2022transformer} [$768$-D], and \texttt{plip}
     \cite{huang2023visual} [$512$-D]) standardized strictly in-fold via 64-component PCA across
-    Camelyon17 \cite{bandi2018detection} ($n=1,500 \to 1,000$ OOD hospital patches) and NCT-CRC
-    \cite{kather2019predicting} ($n=999 \to 1,350$ external tiles).
+    Camelyon17 \cite{bandi2018detection} ($n=1,500 \to 1,000$ OOD hospital patches) and
+    NCT-CRC Binary (\texttt{is\_tumor\_or\_stroma}), the tumor-or-stroma endpoint derived
+    from the 9-class NCT-CRC-HE-100K / CRC-VAL-HE-7K dataset \cite{kather2019predicting}
+    ($n=999 \to 1,350$ external tiles). Single-expert corruption applies a $-2\times$
+    sign-and-scale inversion to standardized PCA-64 features on the held-out \texttt{plip}
+    expert stream.
     \texttt{HesitantFuzzyAggregator} parameters $(\bm{\alpha},\tau_{\text{cert}})$ are trained
     strictly on source out-of-fold predictions via 150 Adam steps ($\text{lr}=0.025$)
     minimizing
@@ -2349,7 +2447,8 @@ patch/tile records (full provenance in Appendix~\ref{app:provenance}).
     \bm{\alpha}^0\|_2^2$, and
     \texttt{BestSingleFM} (\texttt{uni2\_h}) is selected strictly by source CV without
     test-label peeking. Both \texttt{PythagoreanFuzzyTTALoss} ($\text{lr}=0.04$) and
-    logit-level \texttt{Logit-Tent (adapted)} \cite{wang2021tent} (adapting fixed
+    the feature-level multimodal benchmark adaptation \texttt{Logit-Tent (adapted)}
+    \cite{wang2021tent} (operating on per-expert logits from frozen features and adapting
     foundation-model log-odds scale $\bm{s}$ and bias $\bm{b}$ via anchored Shannon entropy
     minimization $\mathcal{L}_{\text{ent}} + 0.20\big[\frac{1}{P}\|\bm{s}-\mathbf{1}\|_2^2 +
     \frac{1}{P}\|\bm{b}\|_2^2\big]$ over 25 Adam steps at $\text{lr}=0.03$) operate in a
@@ -2366,19 +2465,22 @@ baselines comprise (1) EarlyConcat-MLP and (2) LateAvg-Ensemble
 (3) DeepTSK-RuleNet \cite{wu2020optimize}, (4) Dempster--Shafer fusion
 \cite{shafer1976mathematical,denoeux2019decision}, (5) GatedAttention-Transformer
 \cite{arevalo2017gated,vaswani2017attention}, (6) EvidentialDL / TMC
-\cite{sensoy2018evidential,han2022trusted}, and (7) QMF (\textit{ICML'23})
-\cite{zhang2023provable}. We further evaluate two adapted 2024 evidential/disentangled
-baselines: (8) \texttt{RCML
-(adapted)} (\textit{AAAI'24} \cite{xu2024reliable}, view-specific Dirichlet evidence encoders,
-conflict-tolerant averaging, and projective conflict under Dirichlet expected-squared-error +
-variance $\sum_k \hat{p}_k(1-\hat{p}_k)/(S+1)$ + $0.20$ annealed KL + $\frac{0.25}{M}$
-auxiliary BCE), and (9) \texttt{DrFuse (adapted)} (\textit{AAAI'24} \cite{yao2024drfuse},
-shared and distinctive encoders, orthogonality penalty, and cross-modal
-\texttt{MultiheadAttention}). Alongside them, we evaluate two recent fuzzy/evidential methods:
+\cite{sensoy2018evidential,han2022trusted}, and (7) \texttt{QMF (adapted)}
+(\textit{ICML'23}) \cite{zhang2023provable}, a feature-level multimodal adaptation with
+energy/margin dynamic quality weighting and fused plus unimodal auxiliary BCE losses, without
+the original QMF training-history ranking regularizer. We further evaluate feature-level
+multimodal adaptations (8) \texttt{RCML (adapted)} (\textit{AAAI'24}
+\cite{xu2024reliable}, view-specific Dirichlet evidence, conflict-tolerant averaging, and
+projective conflict under Dirichlet expected-squared-error plus variance, annealed KL, and
+auxiliary BCE); (9) \texttt{DrFuse (adapted)} (\textit{AAAI'24} \cite{yao2024drfuse},
+shared and distinctive encoders, orthogonality penalty, and cross-modal attention); and
 (10) \texttt{DDEF (adapted)} (\textit{Inf.\ Fusion'24} \cite{shao2024dual}, dual-level
-Dirichlet unimodal and cross-modal evidence heads with conflict-sensitive uncertainty
-weighting), and (11) \texttt{FUML (adapted)} (\textit{ICML'25} \cite{duan2025fuml},
-view-specific possibility/necessity fuzzy encoders with adaptive confidence weighting). In
+Dirichlet unimodal and cross-modal evidence heads with conflict-sensitive weighting).
+(11) \texttt{FUML (adapted)} (\textit{ICML'25} \cite{duan2025fuml}) adapts fuzzy prototype
+memberships and confidence-weighted Dirichlet evidence, rather than the original multi-view
+possibility/necessity credibility losses. The closely related pre-cutoff R-FUML preprint
+\cite{duan2026rfuml} addresses multi-view conflict but is not re-implemented here.
+In
 addition, we benchmark three strong
 single-table predictors given concatenated standardized features plus explicit
 modality-presence
@@ -2391,7 +2493,8 @@ patient--modality bipartite graphs (\texttt{MUSE} \cite{wu2024muse}) or speciali
 and WSI survival pipelines (\texttt{SurvPath} \cite{jaume2024survpath} and \texttt{EMMS}
 \cite{xing2026emms}) are positioned conceptually in Section~\ref{sec:related} rather than
 reconfigured outside their native graph/survival regimes, whereas single-visit
-vector-compatible fuzzy, evidential, and tabular comparators (\texttt{DDEF}, \texttt{FUML},
+vector-compatible fuzzy, evidential, and tabular comparators (\texttt{DDEF (adapted)},
+\texttt{FUML (adapted)},
 \texttt{XGBoost}, \texttt{CatBoost}, and \texttt{TabPFN~v2}) are directly benchmarked under
 identical splits. To verify that performance does not stem solely from training-fold
 feature--target correlation warm-starting of input gates and Choquet density logits or from our
@@ -2411,8 +2514,10 @@ in-fold \texttt{PCA-20}, mutual information (\texttt{MI-20}), $\ell_1$-penalized
 selection (\texttt{Lasso-20}), and minimum-redundancy maximum-relevance (\texttt{mRMR-20})
 \cite{peng2005feature}, plus a fair matched-architecture \texttt{All-1000} control keeping
 \texttt{use\_rough\_bottleneck=True} and \texttt{use\_feature\_gates=True}. On Track~5, we
-include \texttt{MedianPool6FMs} and \texttt{Logit-Tent (adapted)} (\textit{ICLR'21})
-\cite{wang2021tent}. We report AUROC with 1,000-iteration stratified bootstrap 95\%
+include \texttt{MedianPool6FMs} and the feature-level multimodal adaptation
+\texttt{Logit-Tent (adapted)} (\textit{ICLR'21}) \cite{wang2021tent}, which updates
+per-expert logit scales and biases while foundation-model features remain fixed. We report
+AUROC with 1,000-iteration stratified bootstrap 95\%
 CIs, AUPRC, accuracy, F1, Brier score, 10-bin ECE, AURC, Harrell's C-index, Clopper--Pearson
 exact binomial CIs for small-subgroup proportions, two-sided paired bootstrap $p$-values, and
 Benjamini--Hochberg false-discovery-rate adjusted $q_{\text{BH}}$ values across multi-baseline
@@ -2442,7 +2547,8 @@ Not applicable.
     \item \textbf{Programming language:} Python $\ge 3.9$ with PyTorch $\ge 2.0$ (CPU, CUDA
     GPU, and Apple Metal MPS supported)
     \item \textbf{Other requirements:} \texttt{numpy}, \texttt{scipy}, \texttt{scikit-learn},
-    \texttt{pandas}, \texttt{matplotlib}
+    \texttt{pandas}, \texttt{matplotlib}; optional benchmark comparators:
+    \texttt{xgboost>=1.7.0}, \texttt{catboost>=1.2.0}, and \texttt{tabpfn>=2.0.0}
     \item \textbf{License:} MIT License
     \item \textbf{Any restrictions to use by non-academics:} None
 \end{itemize}
@@ -2450,7 +2556,10 @@ Primary public datasets are accessible through the Alzheimer's Disease Neuroimag
 (\url{https://adni.loni.usc.edu/}), OASIS-3 (\url{https://www.oasis-brains.org/}), the NCI
 Genomic Data Commons and cBioPortal TCGA PanCancer Atlas (\url{https://www.cbioportal.org/}),
 the Reactome Knowledgebase (\url{https://reactome.org/}), Camelyon17, and Zenodo
-NCT-CRC-HE-100K / CRC-VAL-HE-7K.
+NCT-CRC-HE-100K / CRC-VAL-HE-7K. Participant-level ADNI and OASIS-3 tables cannot be
+redistributed directly under their Data Use Agreements. Local benchmark scripts consume
+harmonized credentialed CSV exports and pre-extracted feature caches rather than bundling raw
+LONI neuroimaging or raw WSI ingestion pipelines.
 
 \subsection*{Competing interests}
 The author declares that they have no competing interests.
@@ -2526,16 +2635,22 @@ continuous across $B(r)$ iff either $\mu_j$ is constant on $B(r)$ or some active
 $m^*\in\mathcal{O}$ satisfies $\hat{\mu}_{m^*} = 1$, and unequal-$\mu$ swap jumps are resolved
 deterministically via canonical input-index tie-breaking. Because $a_k = \mathbb{I}(r_k > 0)$
 and $C_{\mathcal{O}}$ depend discontinuously on the active set $\mathcal{O}$, activating a
-modality as $r_u \to 0^+$ preserves continuity whenever $C_{\mathcal{O}} = 0$ (including
-$|\mathcal{O}|=1 \to 2$, where $C_{\{j\}}=0$ and pairwise conflict is $O(r_u)$) and, for
+modality as $r_u \to 0^+$ preserves discount continuity whenever $C_{\mathcal{O}} = 0$
+(and fused-output continuity when the pre-existing certainty ordering or equal-$\mu_j$
+tie-block structure is preserved), including
+$|\mathcal{O}|=1 \to 2$, where $C_{\{j\}}=0$ and pairwise conflict is $O(r_u)$, and, for
 $|\mathcal{O}| \ge 2$ with $C_- := C_{\mathcal{O}} > 0$ scaling to $C_+ =
-\frac{|\mathcal{O}|-1}{|\mathcal{O}|+1}C_{\mathcal{O}} < C_-$ at $\gamma > 0$, causes a
+\frac{|\mathcal{O}|-1}{|\mathcal{O}|+1}C_{\mathcal{O}} < C_-$, causes a
 $\gamma$-independent denominator jump in $C_{\mathcal{O}}$ and a uniform
-$O(\gamma/|\mathcal{O}|)$ jump in $d(\mathcal{C}_{\mathcal{O}})$ alongside bounded
+$|\Delta d|=O(\gamma/|\mathcal{O}|)$ jump in $d(\mathcal{C}_{\mathcal{O}})$ for
+$\gamma\ge0$, independently of ordering, alongside bounded
 Choquet-weight changes. Because $x \mapsto (1-x)^W$ in Eq.~\eqref{eq:ifwa_closed} is Lipschitz
 on $[0, 1-\delta_{\text{int}}]$ ($\delta_{\text{int}}>0$), fused outputs exhibit an interior
-$O_{\delta_{\text{int}}}(\gamma/|\mathcal{O}|)$ jump on $\{r_m \le
-1-\delta_{\text{int}}\}^{|\mathcal{O}|}$. On closed boundary inputs reaching $r_j=1$ with
+$O_{\delta_{\text{int}}}(\gamma/|\mathcal{O}|)$ jump on each $\{r_m \le
+1-\delta_{\text{int}}\}^{|\mathcal{O}|}$ when the pre-existing certainty ordering or
+equal-$\mu_j$ tie-block structure is preserved. A simultaneous reversal of a pre-existing
+unequal-$\mu$ tie at $p\ne1$ adds the finite capacity-swap jump even at $\gamma=0$. Under the
+same ordering proviso, on closed boundary inputs reaching $r_j=1$ with
 $C_{\mathcal{O}}>0$, let $S_\pi = \{j\in\mathcal{O}: r_j=1\}$ and $S_\mu = \{j\in\mathcal{O}:
 \mu_j=1\} \subseteq S_\pi$ with $W_\pi = \sum_{j\in S_\pi} w_j \in (0, 1]$ and $W_\mu =
 \sum_{j\in S_\mu} w_j \in [0, 1)$ ($W_\mu < 1$ because $C_{\mathcal{O}} > 0$ requires some
@@ -2578,12 +2693,17 @@ $\tilde{z}_{i,c} = 0$ and is multiplied by $m_{z,i,c} = 0$ in both the Gaussian 
 $-\frac{1}{2\max(1, |\mathcal{C}_{\text{obs},i}|)}\sum_c m_{z,i,c}
 g_{r,c}(\tilde{z}_{i,c}-c_{r,c})^2/\sigma_{r,c}^2$ and linear consequent $w_{r,0} + \sum_c
 m_{z,i,c} g_{r,c} w_{r,c}\tilde{z}_{i,c}$ (and if $\mathcal{A}_i = \emptyset$,
-$\pi_{i,\text{fused}} = 1 \implies \alpha_{\text{TSK},i} = 0$ and $p_i = 0.5$). Hence
-fixed-width masked tensors exhibit exact \texttt{0.00} prediction discrepancy across arbitrary
+$\pi_{i,\text{fused}} = 1 \implies \alpha_{\text{TSK},i} = 0$ and $p_i = 0.5$). For
+optional \texttt{clinical\_\allowbreak concept\_\allowbreak masks}, this argument applies to
+masked entries of the \texttt{clinical\_\allowbreak concepts} tensor passed to the head,
+holding upstream $\{x_{i,m}\}$ fixed or simultaneously masking shared raw clinical
+variables in $x_{i,\text{Clin}}$. Hence fixed-width masked tensors exhibit exact \texttt{0.00}
+prediction discrepancy across arbitrary
 unobserved fill values and agree identically in exact arithmetic with the variable-width
 $(|\mathcal{A}_i|, |\mathcal{C}_{\text{obs},i}|)$-submodel, differing only by IEEE-754
 summation rounding that scales proportionally with parameter magnitude (empirically $\le
-10^{-6}$ at default float32 scales and $< 10^{-14}$ in float64 on our benchmark checks).
+10^{-7}$ in the Track-0 benchmark audit, $\le 10^{-6}$ across tested default-scale
+variable-width float32 unit checks, and $< 10^{-14}$ in float64 on tested scales).
 $\blacksquare$
 
 \noindent\textbf{Proof of Theorem~\ref{thm:monotonicity} (Partial-Order Monotonicity, Coupled
@@ -2643,10 +2763,9 @@ $R_{\mathcal{B}'}(x_i,x_j) \le R_{\mathcal{B}}(x_i,x_j)$ for all $(i,j)$. Conseq
 $I_{\mathcal{B}}(i,j) = \min(1, 1 - R_{\mathcal{B}}(x_i,x_j) + y_{ij}) \le
 I_{\mathcal{B}'}(i,j)$ and $T_{\mathcal{B}'}^{\text{opp}}(i,j) = \max(0,
 R_{\mathcal{B}'}(x_i,x_j) - y_{ij}) \le T_{\mathcal{B}}^{\text{opp}}(i,j)$ for every $j \in
-V_i$. Because both coordinatewise nondecreasing hard $\min/\max$ and Part~II's shifted
-LogSumExp
-soft-extrema Eq.~\eqref{eq:reducer_softmin} have non-negative (strictly positive for LogSumExp)
-partial derivatives with respect to every coordinate
+V_i$. Hard $\min/\max$ preserve coordinatewise nondecreasing order without requiring
+ordinary derivatives at ties. Part~II's normalized LogSumExp soft-extrema in
+Eq.~\eqref{eq:reducer_softmin} have strictly positive partial derivatives everywhere
 ($\frac{\partial \underline{R}_{\mathcal{B}}^{\text{LSE},\tau}}{\partial I_{ij}} =
 \frac{e^{-I_{ij}/\tau}}{\sum_{k\in V_i} e^{-I_{ik}/\tau}} > 0$, distinct from Part~I's
 Boltzmann-weighted expectation),
@@ -2668,8 +2787,16 @@ $|\text{C1}\cap\text{C2}\cap\text{Long}|=77$, yielding $1,137 + 289 + 1,017 - 90
 and $2,946$ unique TCGA patients gives $5,356$ unique participants alongside $4,849$ pathology
 patches/tiles ($2,500$ Camelyon17 + $2,349$ NCT-CRC). In ADNI Cohort~1 ($N=1,137$), $n=924$
 subjects have a same-visit baseline amyloid PET/CSF reference and $n=213$ have an earliest
-post-baseline confirmatory reference; non-baseline plasma pTau181 and FDG-PET SUVR values are
-masked to \texttt{NaN}. In ADNI Cohort~2 ($N=289$), $49$ overlapping baseline-plasma
+post-baseline confirmatory reference. The intersection of the same-visit baseline reference
+($n=924$) and complete four-modality subset ($N_{\text{comp}}=854$) contains
+$|n=924 \cap N_{\text{comp}}=854|=852$ participants, leaving $72$ same-visit subjects with
+at least one unacquired baseline modality, $2$ complete four-modality participants with a
+post-baseline confirmatory reference, and $211$ incomplete-modality post-baseline participants
+($852+72+2+211=1,137$). The $n=213$ earliest post-baseline amyloid references span follow-up
+visits \texttt{m12} ($n=6$), \texttt{m24} ($n=3$), \texttt{m36} ($n=7$), \texttt{m48}
+($n=96$), \texttt{m60} ($n=73$), and \texttt{m72+} ($n=28$). Non-baseline plasma pTau181
+and FDG-PET SUVR values are masked to \texttt{NaN}. In ADNI Cohort~2 ($N=289$), $49$
+overlapping baseline-plasma
 \texttt{RID}s are excluded in the $N=1,112$ deduplicated discordance audit ($198$ discordant
 vs.\ $914$ concordant, $p=1.75\times 10^{-17}$), whereas pooled $N=1,161$ evaluations yield
 $n_{\text{disc}}=206$ vs.\ $955$ ($1.50\times$, $p=7.41\times 10^{-18}$). Within Cohort~2,
@@ -2703,7 +2830,12 @@ certainties $1 - \pi_m$, and set binary concept mask $m_{z,i,c}=0$ on all missin
 coordinates and trailing padded slots ($M=3, C=8$ in 3-modality TCGA; $M=2, C=6$ or $7$ in
 OASIS-3). In Track~5 (Eq.~\eqref{eq:pfs_tta}), source OOF logits fit $(\bm{\alpha},
 \tau_{\text{cert}})$ at fixed $\kappa_{\text{med}}=2.6$ via 150 Adam steps ($\text{lr}=0.025$),
-transductive PFS TTA updates $(\bm{s}, \bm{\alpha})$ over 25 Adam steps ($\text{lr}=0.04,
+the fitted source-OOF reliability vector $\bm{\alpha}^{\text{src}}$ is frozen as the
+anchor, distinct from the source-CV AUROC initialization prior $\bm{\alpha}^0$ in the
+four-term source objective. With $h_{i,p}^0=\sigma(\ell_{i,p})$, target discordance is
+$d_p^0=\frac{1}{N_{\text{tgt}}}\sum_i|h_{i,p}^0-
+\operatorname{median}_q(h_{i,q}^0)|$, using the lower-middle order statistic for even $P=6$.
+Transductive PFS TTA updates $(\bm{s}, \bm{\alpha})$ over 25 Adam steps ($\text{lr}=0.04,
 \tau_P=0.65, \lambda_{\text{div}}=0.25$), and \texttt{Logit-Tent (adapted)} updates per-model
 affine logit scale and bias over 25 Adam steps ($\text{lr}=0.03$). In DCA over $[0.05, 0.80]$,
 \texttt{DeepFuzzyTorch} falls at or below ``Treat All'' only at $p_t \in [0.05, 0.14]$ and $p_t
@@ -2721,7 +2853,8 @@ models, zero comparable pairs exhibit nonzero risk difference $\le 10^{-8}$; und
 alternative convention including same-timestamp event/censor ties $T_i = T_j$,
 \texttt{DeepFuzzyTorch}'s 4-decimal C-indices remain unchanged (\textbf{0.8804} on ADNI
 longitudinal and \textbf{0.7492} on 3-modality TCGA), while shifting \texttt{EarlyConcat} on
-ADNI longitudinal from $0.8732$ to $0.8733$ and \texttt{QMF} on TCGA from $0.7276$ to $0.7277$.
+ADNI longitudinal from $0.8732$ to $0.8733$ and \texttt{QMF (adapted)} on TCGA from $0.7276$ to
+$0.7277$.
 For selective prediction, \texttt{compute\_aurc} averages empirical $0$--$1$ errors across
 equal-uncertainty tie groups for permutation-invariant evaluation, whereas the frozen benchmark
 archive (\texttt{results/benchmark\_results.json}) retains the execution-time index-ordered tie

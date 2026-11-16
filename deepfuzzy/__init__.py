@@ -13,7 +13,7 @@ multimodal medical AI, computational pathology, and multi-omics integration:
   8. CrossModalityConflictInjector (Conflict Injection & Selective Referral Safety Suite)
   9. SOTA Multimodal & Uncertainty Baselines (EarlyConcatMLP, LateAvgEnsemble,
      GatedAttentionFusion, DempsterShaferFusion, EvidentialDL/EvidentialDLBaseline,
-     DeepTSKBaseline, QMFBaseline, RCMLBaseline, DrFuseBaseline)
+     DeepTSKBaseline, QMFBaseline (adapted), RCMLBaseline, DrFuseBaseline)
 """
 
 from __future__ import annotations
@@ -74,7 +74,7 @@ from .missing_benchmark import CombinatorialMissingModalityBenchmark
 from .conflict_injector import CrossModalityConflictInjector
 from .rough_reducer import FuzzyRoughFeatureReducer
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __all__ = [
     "IntuitionisticFuzzyTensor",
     "IntuitionisticFuzzyEncoder",

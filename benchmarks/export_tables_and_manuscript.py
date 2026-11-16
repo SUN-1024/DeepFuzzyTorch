@@ -3,13 +3,14 @@ Automatically formats all quantitative benchmark results from `results/benchmark
 into publication-ready Markdown reports (`results/BENCHMARK_TABLES_SUMMARY.md` and
 `results/BENCHMARK_SUMMARY_REPORT.md`), with dynamic bolding of true numeric winners,
 Benjamini-Hochberg FDR q-values across Tables 1-6, 2023-2024 SOTA baselines (`RCML (adapted)`,
-`QMF`, `DrFuse (adapted)`, `MedianPool6FMs`, `Logit-Tent (adapted)`), equalized-supervision fairness
+`QMF (adapted)`, `DrFuse (adapted)`, `MedianPool6FMs`, `Logit-Tent (adapted)`), equalized-supervision fairness
 checks, label-free unsupervised transductive TCGA 1,000-gene feature-selector comparisons &
 custom-background Reactome enrichment (`m=676` predeclared `K_bg>=2` pathways), and Track 6 latency/memory scaling.
 """
 
 from __future__ import annotations
 import json
+import math
 import os
 import sys
 from typing import Any, Dict, List
@@ -23,14 +24,26 @@ TABLES_MD = os.path.join(WORKSPACE_DIR, "results/BENCHMARK_TABLES_SUMMARY.md")
 REPORT_MD = os.path.join(WORKSPACE_DIR, "results/BENCHMARK_SUMMARY_REPORT.md")
 
 
-def format_pval(p: float | None) -> str:
+def format_pval(p: float | None, show_one: bool = False) -> str:
     if p is None:
         return "---"
-    if p >= 0.9999:
+    if p >= 0.9999 and not show_one:
         return "---"
     if p < 0.001:
         return f"{p:.2e}" if p < 1e-4 else "<0.001"
     return f"{p:.3f}"
+
+
+def _benjamini_hochberg(pvals: Dict[str, float]) -> Dict[str, float]:
+    """Adjust a family of valid comparator p-values by the BH step-up procedure."""
+    ranked = sorted(pvals.items(), key=lambda item: item[1])
+    adjusted: Dict[str, float] = {}
+    running_min = 1.0
+    for index in range(len(ranked) - 1, -1, -1):
+        key, p = ranked[index]
+        running_min = min(running_min, p * len(ranked) / (index + 1))
+        adjusted[key] = running_min
+    return adjusted
 
 
 def _bold_winner(vals: List[float], fmt: str = ".4f", higher_is_better: bool = True) -> List[str]:
@@ -73,7 +86,7 @@ def generate_markdown_summary(res: Dict[str, Any]) -> str:
         f"- **Theorem 5 Fuzzy-Rough Inclusion Max Violation**: `{t0.get('theorem5_max_inclusion_violation', 0.0):.2e}`"
     )
     md.append(
-        f"- **White-Box TSK Exact Rule Reconstruction Max Error (Precision=8, With Concept Mask)**: `{t1.get('tsk_reconstruction_max_abs_error', 0.0):.3e}`"
+        f"- **White-Box TSK Text Rule Reconstruction Max Error (Precision=8, With Concept Mask)**: `{t1.get('tsk_reconstruction_max_abs_error', 0.0):.3e}`"
     )
     md.append(
         "- **AURC Tie-Handling Convention**: `deepfuzzy.metrics.compute_aurc` averages 0-1 errors across equal-uncertainty ties for permutation invariance, whereas frozen `results/benchmark_results.json` stores initial index-ordered execution values (`31/39` Track 1–4 models including all 4 `DeepFuzzyTorch` tracks match to `0.00e+00`; `8/39` baseline/ablation values differ by $\\le 1.92 \\times 10^{-5}$; `39/39` are identical at 4 decimal places).\n"
@@ -104,7 +117,7 @@ def generate_markdown_summary(res: Dict[str, Any]) -> str:
         ("GatedAttention", "GatedAttention-Transformer"),
         ("EvidentialDL", "EvidentialDL (Dirichlet TMC)"),
         ("RCML", "RCML (adapted, Xu et al., AAAI'24)"),
-        ("QMF", "QMF (Zhang et al., ICML'23)"),
+        ("QMF", "QMF (adapted, Zhang et al., ICML'23)"),
         ("DrFuse", "DrFuse (adapted, Yao et al., AAAI'24)"),
         ("DDEF", "DDEF (adapted, Shao et al., Inf. Fusion'24)"),
         ("FUML", "FUML (adapted, Duan et al., ICML'25)"),
@@ -277,6 +290,7 @@ def generate_markdown_summary(res: Dict[str, Any]) -> str:
     ]
     disp_t3 = {
         "RCML": "RCML (adapt.)",
+        "QMF": "QMF (adapt.)",
         "DrFuse": "DrFuse (adapt.)",
         "DDEF": "DDEF (adapt.)",
         "FUML": "FUML (adapt.)",
@@ -333,7 +347,7 @@ def generate_markdown_summary(res: Dict[str, Any]) -> str:
         ("GatedAttention", "GatedAttention-Transformer"),
         ("EvidentialDL", "EvidentialDL (Dirichlet TMC)"),
         ("RCML", "RCML (adapted, AAAI'24)"),
-        ("QMF", "QMF (ICML'23)"),
+        ("QMF", "QMF (adapted, ICML'23)"),
         ("DrFuse", "DrFuse (adapted, AAAI'24)"),
         ("DeepFuzzyTorch", "DeepFuzzyTorch (Ours)"),
     ]
@@ -474,7 +488,7 @@ def generate_markdown_summary(res: Dict[str, Any]) -> str:
                 "\n## Table 4C: Matched-Coverage Selective Referral Curve (Deduplicated Real-World Discordant ADNI, $n=198$, Nested Outer-Fold ECDF Ranks)\n"
             )
             md.append(
-                "| Method | AURC $\\downarrow$ ($p_{\\text{AURC}}$ vs Ours) | 100% (198) | 95% (188) | 90% (178) | 85% (168) | 81.3% (161) | 80% (158) | 76.8% (152) | 75% (148) | 70.7% (140) | 60% (119) |"
+                "| Method | AURC $\\downarrow$ (raw $p_{\\text{AURC}}$; $q_{\\text{BH}}$ vs Ours) | 100% (198) | 95% (188) | 90% (178) | 85% (168) | 81.3% (161) | 80% (158) | 76.8% (152) | 75% (148) | 70.7% (140) | 60% (119) |"
             )
             md.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
             mc_keys = [
@@ -482,7 +496,7 @@ def generate_markdown_summary(res: Dict[str, Any]) -> str:
                 ("GatedAttention", "GatedAttention-Transformer"),
                 ("EvidentialDL", "EvidentialDL (Dirichlet TMC)"),
                 ("RCML", "RCML (adapted)"),
-                ("QMF", "QMF (ICML'23)"),
+                ("QMF", "QMF (adapted)"),
                 ("DrFuse", "DrFuse (adapted)"),
                 ("DDEF", "DDEF (adapted)"),
                 ("FUML", "FUML (adapted)"),
@@ -496,19 +510,29 @@ def generate_markdown_summary(res: Dict[str, Any]) -> str:
                 "match_161_81p3pct", "cov_80pct", "match_152_76p8pct",
                 "cov_75pct", "match_140_70p7pct", "cov_60pct",
             ]
+            mc_pvals = {
+                mk: p for mk, _ in mc_keys if mk != "DeepFuzzyTorch" and mk in mc_models
+                if isinstance((p := mc_models[mk].get("aurc_p_vs_ours")), (int, float))
+                and math.isfinite(p) and 0.0 <= p <= 1.0
+            }
+            mc_qvals = _benjamini_hochberg(mc_pvals)
             for mk, mlbl in mc_keys:
                 if mk not in mc_models:
                     continue
                 mv = mc_models[mk]
                 pts = mv["points"]
                 lbl_fmt = f"**{mlbl}**" if mk == "DeepFuzzyTorch" else mlbl
-                p_au = "---" if mk == "DeepFuzzyTorch" else format_pval(mv.get("aurc_p_vs_ours"))
+                p_au = format_pval(mc_pvals.get(mk), show_one=True)
+                q_au = format_pval(mc_qvals.get(mk), show_one=True)
                 row_vals = " | ".join(f"{pts[ck]['acc']:.4f}" for ck in cols_mc)
-                md.append(f"| {lbl_fmt} | {mv['aurc']:.4f} ({p_au}) | {row_vals} |")
+                md.append(f"| {lbl_fmt} | {mv['aurc']:.4f} ({p_au}; {q_au}) | {row_vals} |")
             if "conflict_only_nested_ecdf" in mc_dd and "DeepFuzzyTorch" in mc_dd["conflict_only_nested_ecdf"]["models"]:
                 mv_co = mc_dd["conflict_only_nested_ecdf"]["models"]["DeepFuzzyTorch"]
                 row_co = " | ".join(f"{mv_co['points'][ck]['acc']:.4f}" for ck in cols_mc)
-                md.append(f"| **DeepFuzzyTorch (Pure $C_{{\\mathcal{{O}}}}$ ECDF)** | {mv_co['aurc']:.4f} (---) | {row_co} |")
+                md.append(f"| **DeepFuzzyTorch (Pure $C_{{\\mathcal{{O}}}}$ ECDF)** | {mv_co['aurc']:.4f} (---; ---) | {row_co} |")
+            md.append(
+                f"\nRaw paired-bootstrap $p_{{\\text{{AURC}}}}$ values are adjusted by Benjamini--Hochberg across the {len(mc_pvals)} available comparator tests; Ours rows are excluded from the family.\n"
+            )
 
     # =========================================================================
     # Table 5: TCGA Pan-Cancer 3-Modality Benchmark
@@ -528,7 +552,7 @@ def generate_markdown_summary(res: Dict[str, Any]) -> str:
         ("GatedAttention", "GatedAttention-Transformer"),
         ("EvidentialDL", "EvidentialDL (Dirichlet TMC)"),
         ("RCML", "RCML (adapted, AAAI'24)"),
-        ("QMF", "QMF (ICML'23)"),
+        ("QMF", "QMF (adapted, ICML'23)"),
         ("DrFuse", "DrFuse (adapted, AAAI'24)"),
         ("DeepFuzzyTorch", "DeepFuzzyTorch (Ours)"),
     ]
@@ -608,7 +632,7 @@ def generate_markdown_summary(res: Dict[str, Any]) -> str:
             ("GatedAttention_4Mod_Top20", "GatedAttention-Transformer (Top-20 Gene Reduct)"),
             ("EvidentialDL_4Mod_Top20", "EvidentialDL (Top-20 Gene Reduct)"),
             ("RCML_4Mod_Top20", "RCML (adapted, AAAI'24, Top-20 Gene Reduct)"),
-            ("QMF_4Mod_Top20", "QMF (ICML'23, Top-20 Gene Reduct)"),
+            ("QMF_4Mod_Top20", "QMF (adapted, ICML'23, Top-20 Gene Reduct)"),
             ("DrFuse_4Mod_Top20", "DrFuse (adapted, AAAI'24, Top-20 Gene Reduct)"),
             ("DeepFuzzyTorch_4Mod_All1000", "DeepFuzzyTorch (Unreduced 1,000 Genes, Fair Matched Gates/Rough)"),
             ("DeepFuzzyTorch_4Mod_Top20", "DeepFuzzyTorch (Ours, Top-20 Fuzzy-Rough Gene Reduct)"),
@@ -647,7 +671,7 @@ def generate_markdown_summary(res: Dict[str, Any]) -> str:
     # Table 6: 6-Foundation-Model Hesitant Fuzzy Consensus & Pythagorean TTA
     # =========================================================================
     md.append(
-        "\n## Table 6: 6-Foundation-Model Hesitant Consensus (Block 2, Source OOF Adam-Trained) & Pythagorean TTA (Block 5) on Camelyon17 ($N=2,500$) & NCT-CRC ($N=2,349$)\n"
+        "\n## Table 6: 6-Foundation-Model Hesitant Consensus (Block 2, Source OOF Adam-Trained) & Pythagorean TTA (Block 5) on Camelyon17 ($N=2,500$) & NCT-CRC ($N=2,349$; binary `is_tumor_or_stroma` endpoint; corrupted-FM scenario uses -2x PLIP PCA-64 corruption)\n"
     )
     md.append(
         "| Benchmark Scenario (In-Fold PCA-64) | Source / Target $N$ | Best Single FM | MeanPool 6-FMs | MedianPool 6-FMs | Logit-Tent TTA (adapted) | Hesitant Fuzzy (Block 2) | Hesitant Fuzzy + PFS-TTA (Ours) | BH $q$ vs. Mean / Tent |"
@@ -699,7 +723,7 @@ def generate_markdown_summary(res: Dict[str, Any]) -> str:
                 if (m_rt, 16) in by_m
                 else "---"
             )
-            rt_map = {"RCML": "RCML (adapted)", "DrFuse": "DrFuse (adapted)"}
+            rt_map = {"RCML": "RCML (adapted)", "QMF": "QMF (adapt.)", "DrFuse": "DrFuse (adapted)"}
             lbl_rt = "**UnifiedDeepFuzzyModel (Ours)**" if m_rt == "UnifiedDeepFuzzyModel" else rt_map.get(m_rt, m_rt)
             md.append(f"| {lbl_rt} | " + " | ".join(cells_n) + f" | {m_str} |")
 

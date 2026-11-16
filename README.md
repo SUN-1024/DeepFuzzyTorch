@@ -17,7 +17,7 @@
    - **Conflict-Driven Epistemic Hesitancy Inflation (Theorem 4)**: Holding modality non-vacuity certainty masses $r_m = \mu_m + \nu_m \in (0, 1)$ fixed, pairwise cross-polarity contradiction $C_{\mathcal{O}}$ exponentially discounts conflicting directional beliefs and strictly inflates fused hesitancy ($\partial \ln \pi_{\text{fused}} / \partial C_{\mathcal{O}} > 0$), resolving Zadeh's high-conflict normalization collapse and enabling selective clinical triage.
 2. **Block 2 — Differentiable Hesitant Fuzzy Multi-Expert / Multi-FM Aggregator (`HesitantFuzzyAggregator`)**:
    - Aggregates hesitant membership sets $h(x) = \{\mu^{(1)}(x), \dots, \mu^{(K)}(x)\}$ across multiple pathology foundation models, prompts, or clinical raters (Torra HFS) via hesitant fuzzy dispersion / deviation degree $\pi_{\text{HFS}}(h(x)) = \min\big(0.95,\, 2\sqrt{\operatorname{Var}(h(x))}\big)$ following **Xu & Xia (2012)** and **Liao & Xu (2013)**, optimized via 150 Adam steps on out-of-fold source predictions.
-3. **Block 3 — GPU-Differentiable Fuzzy-Rough Approximations & Pointwise T-Norm Minimal Reduct (`DifferentiableFuzzyRoughLayer`, `FuzzyRoughAttentionGate`, `FuzzyRoughFeatureReducer`)**:
+3. **Block 3 — GPU-Differentiable Fuzzy-Rough Approximations & Offline Pointwise T-Norm Minimal Reduct (`DifferentiableFuzzyRoughLayer`, `FuzzyRoughAttentionGate`, `FuzzyRoughFeatureReducer`)**:
    - Bridges Dubois–Prade Fuzzy-Rough Set Theory with deep neural networks via projected Soft-Łukasiewicz operators guaranteeing $\underline{R}_{\text{exact}}(A) \le \underline{R}_{\tau,\beta}(A) \le A \le \overline{R}_{\tau,\beta}(A) \le \overline{R}_{\text{exact}}(A)$ (**Theorem 5, Part I**, `0.00e+00` inclusion violation) and MAD-standardized pointwise T-norm granular monotonicity with permutation-null calibration (**Theorem 5, Part II**).
    - Selects **supervised in-fold** biomarker reducts from 320 FreeSurfer MRI ROIs ($320 \to K^*=24$, 5-fold Jaccard `0.4330`, `81.77%` MRI branch parameter reduction) and from an unsupervised, label-free transductive 1,000-gene TCGA PanCancer Atlas MAD candidate pool ($1,000 \to K^*=20$, 5-fold Jaccard `0.3816`, `94.05%` RNA branch parameter reduction; sensitivity check from the cached 5,000-gene pool yields `0.9685` candidate Jaccard and `0.7389` AUROC).
 4. **Block 4 — Concept-Masked White-Box Takagi–Sugeno–Kang (TSK) Fuzzy Rule Head (`DeepConceptTSKHead`)**:
@@ -27,7 +27,7 @@
 6. **14 Built-In & Phase-1 Tabular/Fusion Comparators (`deepfuzzy/baselines.py`, `benchmarks/run_if_phase1_upgrades.py`)**:
    - Classical & neural fusion: `EarlyConcatMLP`, `LateAvgEnsemble`, `DeepTSKBaseline`, `DempsterShaferFusion`, `GatedAttentionFusion`, and `EvidentialDL` (`EvidentialDLBaseline`, Dirichlet TMC).
    - **2023–2025 incomplete, evidential & fuzzy fusion baselines**:
-     - `QMFBaseline` — *Quality-Aware Multimodal Fusion* (Zhang et al., *ICML* 2023)
+     - `QMFBaseline` — QMF (adapted), *Quality-Aware Multimodal Fusion* (Zhang et al., *ICML* 2023)
      - `RCMLBaseline` (adapted) — *Reliable Conflictive Multi-View Learning* adaptation (Xu et al., *AAAI* 2024)
      - `DrFuseBaseline` (adapted) — *Disentangled Representation Learning for Multimodal Healthcare with Missing Modalities* adaptation (Yao et al., *AAAI* 2024)
      - `DDEFBaseline` (adapted) — *Dual-Level Deep Evidential Fusion* adaptation (Shao et al., *Information Fusion* 2024)
@@ -43,6 +43,12 @@ git clone https://github.com/SUN-1024/DeepFuzzyTorch.git
 cd DeepFuzzyTorch
 python3 -m venv .venv
 .venv/bin/pip install -e ".[dev]"
+```
+
+To reproduce the tabular comparators (`XGBoost`, `CatBoost`, and `TabPFN v2`), install the optional benchmark dependencies as well:
+
+```bash
+.venv/bin/pip install -e ".[dev,benchmark]"
 ```
 
 ---
@@ -107,7 +113,7 @@ fused_ifn = out["fused_ifn"]  # IntuitionisticFuzzyTensor <mu, nu, pi>
 print("Valid Simplex Closure:", fused_ifn.validate())
 print("Predicted Probabilities:", out["prob"].shape, "Fused Hesitancy:", out["hesitancy"].shape)
 
-# 3. Export human-readable IF-THEN clinical decision rules & verify exact text reconstruction
+# 3. Export human-readable IF-THEN clinical decision rules & measure text reconstruction error
 rules = model.tsk_head.export_clinical_rules(gate_threshold=0.0, precision=8)
 recon_logits = model.tsk_head.evaluate_exported_rules_text(
     rules,
@@ -129,12 +135,12 @@ Evaluated across **5,356 unique clinical & oncology participants** (`1,384` dedu
 | Benchmark Track & Cohort | Primary Evaluation Task | Key `DeepFuzzyTorch` Result & SOTA Comparison |
 | :--- | :--- | :--- |
 | **Track 0: Mathematical Audit** ($N=250$ Tuples, $40\times 40$ Grid, 50-Pt Sweep, $N_{\text{tok}}=45$) | Simplex closure, vacuity invariance, monotonicity, conflict inflation & rough bounds | Closure `5.96e-08`; missing-modality vacuity error **`0.00e+00`** ($w_{\text{miss}}=0.00$); fixed-conflict $\min \partial\mu/\partial\mu_1 = 0.2072$; rough violation `0.00e+00` |
-| **Track 1: ADNI Cohort 1** ($N=1,137$, 58 Sites, 4 Modalities; Complete 4M $N_{\text{comp}}=854$) | Baseline amyloid-$\beta$ PET/CSF classification ($6/1,137$ [$0.53\%$] missing `ADAS13` in-fold median imputed) & $2^4-1=15$ subsets | Full AUROC `0.8270` (`0.8387` same-visit $n=924$; `0.8371` [95% CI `0.8091–0.8612`] complete 4M $N_{\text{comp}}=854$; $q_{\text{BH}} \ge 0.100$ across 13 neural/evidential/GBDT comparators and $q_{\text{BH}} \ge 0.260$ across 2023–2025 fusion models [`QMF`, `RCML`, `DrFuse`, `DDEF`, `FUML`], trailing `TabPFN v2` `0.8443`, $q_{\text{BH}}=0.040$); **`MRR=0.9344`** & 15-subset Macro-AUROC `0.7764` (vs. `FUML` `0.7790`, `TabPFN v2` `0.7635`, `CatBoost` `0.7405`, `XGBoost` `0.7056`); **pure $C_{\mathcal{O}}$ swap AUROC `0.7000`** ($0.6542$ composite, $0.5337$ pure $\pi_f$) & conflict 20%-triage `0.8302` ($\gamma=0.8$); TSK text rule reconstruction error **`2.384e-07`** |
+| **Track 1: ADNI Cohort 1** ($N=1,137$, 58 Sites, 4 Modalities; Complete 4M $N_{\text{comp}}=854$) | Baseline amyloid-$\beta$ PET/CSF classification ($6/1,137$ [$0.53\%$] missing `ADAS13` in-fold median imputed) & $2^4-1=15$ subsets | Full AUROC `0.8270` (`0.8387` same-visit $n=924$; `0.8371` [95% CI `0.8091–0.8612`] complete 4M $N_{\text{comp}}=854$); no statistically significant full-cohort AUROC difference after BH correction across 13 neural/evidential/GBDT comparators ($q_{\text{BH}} \ge 0.100$), including the 2023–2025 fusion models [`QMF (adapted)`, `RCML`, `DrFuse`, `DDEF`, `FUML`] ($q_{\text{BH}} \ge 0.260$); `TabPFN v2` leads significantly with full-cohort AUROC `0.8443` ($q_{\text{BH}}=0.040$); **`MRR=0.9344`** & 15-subset Macro-AUROC `0.7764` (vs. `FUML` `0.7790`, `TabPFN v2` `0.7635`, `CatBoost` `0.7405`, `XGBoost` `0.7056`); **pure $C_{\mathcal{O}}$ swap AUROC `0.7000`** ($0.6542$ composite, $0.5337$ pure $\pi_f$) & conflict 20%-triage `0.8302` ($\gamma=0.8$); TSK text rule reconstruction error **`2.384e-07`** |
 | **Track 2: Real-World Discordance & Cohort 2** ($N=1,112$ Unique ADNI; C2 $N=289$) | Strictly nested in-fold plasma/MRI/cognitive discordance triage & pTau217/GFAP screening | Discordance vs. concordance elevates conflict $C_{\mathcal{O}}$ **`1.51x`** ($n=198$ vs. $n=914$, Mann–Whitney **$p = 1.75 \times 10^{-17}$**); nested matched-coverage ECDF triage (`81.3%`, $161/198$) raises accuracy from `0.7475` to **`0.7764`** (`0.7826` pure $C_{\mathcal{O}}$; `0.7911` at $80\%$, eliminating GBDT threshold shrinkage `32.3%`–`50.0%`); Cohort 2 AUROC `0.8740` (`0.8844` on $\le 90$d $n=211$, $q_{\text{BH}} \ge 0.602$ across 12 comparators); exploratory CKD ($n=22$) Acc `0.8421` (`16/19`) |
 | **Track 3A & 3B: Longitudinal & OASIS-3** (ADNI $N=1,017$; OASIS-3 $N=1,026$) | 60-month MCI-to-dementia conversion & 5-seed zero-shot external transfer | **#1 60m conversion AUROC `0.9419`** & **#1 C-index `0.8804`** (in-fold tertile log-rank $p = 3.34 \times 10^{-72}$); **#1 5-seed external OASIS-3 Dementia AUROC `0.8639 ± 0.0010`** (`DrFuse (adapted)` $q_{\text{BH}}=0.024$, `GatedAttn`/`EarlyConcat` $q_{\text{BH}}=0.028$; Strict-AD source `0.8603`) |
 | **Track 4: 7-Cohort TCGA Pan-Cancer** ($N=2,946$; Unsupervised Transductive 1,000-MAD Pool) | 3-modality WSI+Omics fusion & **supervised in-fold** $1,000 \to K^*=20$ gene reduct | 3-Mod AUROC `0.7377`, **#1 OS C-index `0.7492`**, **#1 7-subset Macro-AUROC `0.6944`**; **#1 fusion-model 4-Mod Top-20 AUROC `0.7403`** & OS C-index `0.7514` (`3.61x` higher Jaccard `0.3816` vs. `MI-20` `0.1058` at `0.7417`, `mRMR-20` C-index `0.7528`, `MI-20` `0.7520`; vs. fair 1,000-gene `DeepFuzzyTorch` `0.6925`, **$q_{\text{BH}} = 0.0025$**); custom-BG ($N_{\text{bg}}=1,000$) Reactome ORA recovers **`8` pathways at BH $\text{FDR}<0.05$ across all `676` predeclared $K_{\text{bg}}\ge 2$ BG pathways** ($q_{\text{BH}}=0.0308$, led by `R-HSA-5686938`) |
-| **Track 5: 6-FM Pathology Consensus** (`Camelyon17` $N=2,500$; `NCT-CRC` $N=2,349$) | OOD hospital / cohort transfer & 1-corrupted-FM resilience (`PCA-64`, `uni2_h`/`phikon_v2`/`kaiko_vitl14`/`phikon`/`ctranspath`/`plip`) | Under 1 corrupted FM: **`0.9925` AUROC** on Camelyon17 ($q_{\text{BH}}=0.010$ vs. `MeanPool` `0.9894` / `Logit-Tent (adapted)` `0.9893`) & **`0.9804` AUROC** on NCT-CRC ($q_{\text{BH}}=0.0025$ vs. `MeanPool` `0.9567` / `Logit-Tent (adapted)` `0.9561`) |
-| **Track 6: Runtime & Memory Scaling** ($N \in [64, 4096]$, $M \in [2, 16]$) | Wall-clock forward+backward latency & peak live tensor memory | Linear memory scaling (`1.8 MiB` at $N=64 \to 97.4\text{ MiB}$ / `26.60 ms` fwd+bwd at $N=4,096$, matching latency & `20.6%` lighter than `DrFuse (adapted)` `26.62 ms` / `122.6 MiB`; `4.90 ms` / `4.6 MiB` post-$K^*=20$ reduct at $D=5,000$); TCGA-scale reducer fit ($N=1,024, D=1,000$) in `2.190s` |
+| **Track 5: 6-FM Pathology Consensus** (`Camelyon17` $N=2,500$; `NCT-CRC` $N=2,349$) | OOD hospital / cohort transfer & 1-corrupted-FM resilience (`PCA-64`, `uni2_h`/`phikon_v2`/`kaiko_vitl14`/`phikon`/`ctranspath`/`plip`); NCT-CRC binary tumor-or-stroma endpoint (`is_tumor_or_stroma`) derived from 9-class `NCT-CRC-HE-100K` / `CRC-VAL-HE-7K` | Under 1 corrupted FM: **`0.9925` AUROC** on Camelyon17 ($q_{\text{BH}}=0.010$ vs. `MeanPool` `0.9894` / `Logit-Tent (adapted)` `0.9893`) & **`0.9804` AUROC** on NCT-CRC ($q_{\text{BH}}=0.0025$ vs. `MeanPool` `0.9567` / `Logit-Tent (adapted)` `0.9561`) |
+| **Track 6: Runtime & Memory Scaling** ($N \in [64, 4096]$, $M \in [2, 16]$) | Wall-clock forward+backward latency & peak live tensor memory | Linear memory scaling (`1.8 MiB` at $N=64 \to 97.4\text{ MiB}$ / `26.60 ms` fwd+bwd at $N=4,096$, matching latency & `20.6%` lighter than `DrFuse (adapted)` `26.62 ms` / `122.6 MiB`); at $N=256, M=4$, `4.90 ms` / `4.6 MiB` after $K^*=20$ reduction from raw $D_m=5,000$ excludes offline reducer fitting and raw input processing; pre-reduction peak memory is `123.1 MiB` vs. `DrFuse (adapted)` `92.3 MiB`. Offline reducer fitting at $N=1,024, D=1,000$ costs `2.190 s` / `489.5 MiB` |
 
 > **AURC Tie-Group Convention**: `deepfuzzy.metrics.compute_aurc` averages empirical 0–1 errors within equal-uncertainty tie blocks for permutation invariance, whereas frozen `results/benchmark_results.json` retains execution-time index-ordered tie breaking (`31/39` Track 1–4 models—including all 4 `DeepFuzzyTorch` entries—agree to `0.00e+00`, `8/39` baseline/ablation AURCs differ by $\le 1.92 \times 10^{-5}$, and all `39/39` are identical at 4 decimal places).
 
@@ -146,6 +152,9 @@ Evaluated across **5,356 unique clinical & oncology participants** (`1,384` dedu
 # Install editable package with dev/test dependencies (includes pytest)
 .venv/bin/pip install -e ".[dev]"
 
+# Include XGBoost, CatBoost, and TabPFN v2 for the tabular comparators
+.venv/bin/pip install -e ".[dev,benchmark]"
+
 # Run mathematical theorem & autograd verification suite (standalone & pytest)
 PYTHONPATH=. .venv/bin/python tests/test_operators_and_theorems.py
 PYTHONPATH=. .venv/bin/python -m pytest -q tests/test_operators_and_theorems.py
@@ -156,7 +165,7 @@ PYTHONPATH=. .venv/bin/python examples/quickstart_synthetic_demo.py
 # Stage 1: Fetch unsupervised transductive 1,000-MAD-gene TCGA PanCanAtlas pool & Reactome GMT
 PYTHONPATH=. .venv/bin/python benchmarks/fetch_tcga_1000genes_cbioportal.py
 
-# Stage 2: Core zero-leakage multi-track benchmark (incl. QMF, adapted RCML & DrFuse, Logit-Tent TTA)
+# Stage 2: Core zero-leakage multi-track benchmark (incl. QMF (adapted), adapted RCML & DrFuse, Logit-Tent TTA)
 PYTHONPATH=. .venv/bin/python benchmarks/run_full_benchmark.py --device cuda --data-root /path/to/datasets
 
 # Stage 3: Strictly nested in-fold ADNI discordance audit, TCGA selector baselines & custom-BG Reactome ORA
@@ -173,6 +182,8 @@ PYTHONPATH=. .venv/bin/python benchmarks/update_r3_gpu_artifacts.py --device cud
 PYTHONPATH=. .venv/bin/python benchmarks/export_tables_and_manuscript.py
 PYTHONPATH=. .venv/bin/python benchmarks/build_companion_manuscripts.py
 ```
+
+**Data and reproducibility:** The benchmark scripts consume harmonized credentialed CSV exports and pre-extracted feature caches; see [`data_benchmark/README_DATA_ACCESS.md`](data_benchmark/README_DATA_ACCESS.md) for access and preparation. The offline `FuzzyRoughFeatureReducer` is a tensor-accelerated pointwise T-norm greedy selector, distinct from the differentiable neural modules. The 8-decimal TSK text export achieves an empirical maximum reconstruction error of `2.384e-07` on Fold 0; rounding means this is not exact functional identity in real arithmetic.
 
 ---
 
@@ -192,9 +203,9 @@ The `paper/` directory provides **three mutually exclusive single-submission LaT
 ```text
 Fuzzy/
 ├── deepfuzzy/
-│   ├── __init__.py                     # Public API exports (v0.2.0)
+│   ├── __init__.py                     # Public API exports (v0.2.1)
 │   ├── operators.py                    # 5 core differentiable fuzzy/granular operators + UnifiedDeepFuzzyModel
-│   ├── baselines.py                    # Neural/evidential/fuzzy comparators (incl. QMF, RCML, DrFuse, DDEF, FUML)
+│   ├── baselines.py                    # Neural/evidential/fuzzy comparators (incl. QMF (adapted), RCML, DrFuse, DDEF, FUML)
 │   ├── missing_benchmark.py            # 2^M - 1 combinatorial & stress-curve missing-modality evaluator
 │   ├── conflict_injector.py            # Cross-modality conflict injection & selective referral evaluator
 │   ├── rough_reducer.py                # Pointwise T-norm Fuzzy-Rough minimal attribute reduct selector

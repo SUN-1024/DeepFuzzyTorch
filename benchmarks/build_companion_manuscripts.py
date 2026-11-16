@@ -259,13 +259,13 @@ def build_genome_biology_tex(parts: Dict[str, str]) -> str:
 Multi-omics and multimodal biomedical integration---spanning high-dimensional pan-cancer transcriptomics (RNA-Seq), genomic instability signatures, gigapixel histopathology whole-slide images (WSIs), neuroimaging, and blood proteomics---is hindered by four coupled obstacles: combinatorial missing modalities across $2^M-1$ nonempty subsets at inference, real-world cross-modal biomarker discordance and physiological confounding, severe collinearity in high-dimensional transcriptomic and morphometric spaces ($D \ge 320\text{--}1,000$ features), and black-box fusion heads lacking auditable rule representations.
 
 \subsubsection*{Results}
-We present \texttt{DeepFuzzyTorch} (\texttt{v0.2.0}), an open-source PyTorch software library providing five composable, GPU-accelerated differentiable fuzzy-rough operator blocks (\texttt{IFS\allowbreak Choquet\allowbreak Fusion}, \texttt{Hesitant\allowbreak Fuzzy\allowbreak Aggregator}, \texttt{Differentiable\allowbreak Fuzzy\allowbreak Rough\allowbreak Layer}/\allowbreak\texttt{Fuzzy\allowbreak Rough\allowbreak Feature\allowbreak Reducer}, \texttt{Deep\allowbreak Concept\allowbreak TSKHead}, and \texttt{Pythagorean\allowbreak Fuzzy\allowbreak TTALoss}) backed by five proved mathematical theorems and an end-to-end missing-modality/concept-mask invariance corollary ($0.00$ fixed-width padding-value discrepancy; algebraic submodel equivalence within float32 reduction rounding). Evaluated across 5,356 unique oncology and clinical participants and 4,849 histopathology patch/tile records against fourteen multimodal and tabular comparators (including \texttt{QMF}, adapted \texttt{RCML}/\texttt{DrFuse}/\texttt{DDEF}/\texttt{FUML}, \texttt{XGBoost}, \texttt{CatBoost}, and \texttt{TabPFN~v2}), \texttt{FuzzyRoughFeatureReducer} performs supervised in-fold reduction of an unsupervised transductive 1,000-gene TCGA PanCancer Atlas MAD RNA-Seq pool to $K^*=20$ genes ($98.0\%$ compression, $94.05\%$ RNA branch parameter reduction, 5-fold pairwise Jaccard $0.3816$). This 20-gene reduct recovers 8 enriched Reactome pathways at Benjamini--Hochberg $\text{FDR}<0.05$ across all 676 predeclared $K_{\mathrm{bg}}\ge 2$ pathways in the custom 1,000-gene background ($q_{\mathrm{BH}}=0.0308$, led by \texttt{R-HSA-5686938} endogenous TLR regulation at $25.0\times$ enrichment) and improves 4-modality pan-cancer fusion over matched unreduced 1,000-gene fusion ($0.7403$ vs.\ $0.6925$ AUROC, $q_{\mathrm{BH}}=0.0025$; OS C-index $0.7514$ vs.\ $0.6933$). Across $N=1,112$ deduplicated unique ADNI participants, observed-pair conflict $C_{\mathcal{O}}$ is $1.51\times$ higher in $n=198$ real-world discordant patients than in $n=914$ concordant patients ($p = 1.75 \times 10^{-17}$), pure $C_{\mathcal{O}}$ detects $\gamma=0.8$ swaps at $0.7000$ AUROC ($0.6542$ composite), and nested matched-coverage triage ($81.3\%$, $161/198$) improves accuracy from $0.7475$ to $0.7764$ ($0.7826$ via pure $C_{\mathcal{O}}$; $0.7911$ at $80\%$). On ADNI Cohort~1, \texttt{DeepFuzzyTorch} reports separated natural-missingness ($N=1,137$, $0.8270$), same-visit ($n=924$, $0.8387$), and complete four-modality ($N_{\mathrm{comp}}=854$, $0.8371$) metrics alongside superior tree/foundation-model missingness retention ($\text{MRR}=0.9344$, 15-subset macro $0.7764$), 60-month dementia conversion ($0.9419$ AUROC; C-index $0.8804$), 5-seed external OASIS-3 transfer ($0.8639\pm 0.0010$ AUROC), corrupted-expert pathology consensus ($0.9925$ and $0.9804$ AUROC), and $2.384\times 10^{-7}$ text-rule reconstruction error.
+We present \texttt{DeepFuzzyTorch} (\texttt{v0.2.1}), an open-source PyTorch software library providing five composable PyTorch fuzzy operator blocks and an offline tensor-accelerated selector (\texttt{IFS\allowbreak Choquet\allowbreak Fusion}, \texttt{Hesitant\allowbreak Fuzzy\allowbreak Aggregator}, \texttt{Differentiable\allowbreak Fuzzy\allowbreak Rough\allowbreak Layer}/\allowbreak\texttt{Fuzzy\allowbreak Rough\allowbreak Feature\allowbreak Reducer}, \texttt{Deep\allowbreak Concept\allowbreak TSKHead}, and \texttt{Pythagorean\allowbreak Fuzzy\allowbreak TTALoss}) backed by five proved mathematical theorems and an end-to-end missing-modality/concept-mask invariance corollary ($0.00$ fixed-width padding-value discrepancy; algebraic submodel equivalence within float32 reduction rounding). Evaluated across 5,356 unique oncology and clinical participants and 4,849 histopathology patch/tile records against fourteen multimodal and tabular comparators (including \texttt{QMF (adapted)}, adapted \texttt{RCML}/\texttt{DrFuse}/\texttt{DDEF}/\texttt{FUML}, \texttt{XGBoost}, \texttt{CatBoost}, and \texttt{TabPFN~v2}), \texttt{FuzzyRoughFeatureReducer} performs supervised in-fold reduction of an unsupervised transductive 1,000-gene TCGA PanCancer Atlas MAD RNA-Seq pool to $K^*=20$ genes ($98.0\%$ compression, $94.05\%$ RNA branch parameter reduction, 5-fold pairwise Jaccard $0.3816$). This 20-gene reduct recovers 8 enriched Reactome pathways at Benjamini--Hochberg $\text{FDR}<0.05$ across all 676 predeclared $K_{\mathrm{bg}}\ge 2$ pathways in the custom 1,000-gene background ($q_{\mathrm{BH}}=0.0308$, led by \texttt{R-HSA-5686938} endogenous TLR regulation at $25.0\times$ enrichment) and improves 4-modality pan-cancer fusion over matched unreduced 1,000-gene fusion ($0.7403$ vs.\ $0.6925$ AUROC, $q_{\mathrm{BH}}=0.0025$; OS C-index $0.7514$ vs.\ $0.6933$). Across $N=1,112$ deduplicated unique ADNI participants, observed-pair conflict $C_{\mathcal{O}}$ is $1.51\times$ higher in $n=198$ real-world discordant patients than in $n=914$ concordant patients ($p = 1.75 \times 10^{-17}$), pure $C_{\mathcal{O}}$ detects $\gamma=0.8$ swaps at $0.7000$ AUROC ($0.6542$ composite), and nested matched-coverage triage ($81.3\%$, $161/198$) improves accuracy from $0.7475$ to $0.7764$ ($0.7826$ via pure $C_{\mathcal{O}}$; $0.7911$ at $80\%$). On ADNI Cohort~1, \texttt{DeepFuzzyTorch} reports separated natural-missingness ($N=1,137$, $0.8270$), same-visit ($n=924$, $0.8387$), and complete four-modality ($N_{\mathrm{comp}}=854$, $0.8371$) metrics alongside superior tree/foundation-model missingness retention ($\text{MRR}=0.9344$, 15-subset macro $0.7764$), 60-month dementia conversion ($0.9419$ AUROC; C-index $0.8804$), 5-seed external OASIS-3 transfer ($0.8639\pm 0.0010$ AUROC), corrupted-expert pathology consensus ($0.9925$ and $0.9804$ AUROC), and $2.384\times 10^{-7}$ text-rule reconstruction error.
 
 \subsubsection*{Conclusions}
 \texttt{DeepFuzzyTorch} delivers an installable, unit-tested PyTorch operator toolkit for granular multi-omics reduction, missing-modality-invariant fusion, conflict-guided clinical triage, and machine-precision white-box rule export.
 
 \vspace{0.35em}
-\noindent\textbf{Keywords:} Open-Source PyTorch Software; Multi-Omics Data Integration; Differentiable Fuzzy-Rough Feature Reduction; Custom-Background Pathway Enrichment; Missing Modalities; Biomarker Discordance; Computational Pathology.
+\noindent\textbf{Keywords:} Open-Source PyTorch Software; Multi-Omics Data Integration; Fuzzy-Rough Feature Selection; Custom-Background Pathway Enrichment; Missing Modalities; Biomarker Discordance; Computational Pathology.
 \end{abstract}
 """
     )
@@ -342,11 +342,11 @@ Not applicable.
     \item \textbf{Project home page:} \url{https://github.com/SUN-1024/DeepFuzzyTorch}
     \item \textbf{Operating system(s):} Platform independent (Linux, macOS, Windows)
     \item \textbf{Programming language:} Python $\ge 3.9$ with PyTorch $\ge 2.0$ (CPU, CUDA GPU, and Apple Metal MPS supported)
-    \item \textbf{Other requirements:} \texttt{numpy}, \texttt{scipy}, \texttt{scikit-learn}, \texttt{pandas}, \texttt{matplotlib}
+    \item \textbf{Other requirements:} \texttt{numpy}, \texttt{scipy}, \texttt{scikit-learn}, \texttt{pandas}, \texttt{matplotlib}; optional benchmark comparators: \texttt{xgboost>=1.7.0}, \texttt{catboost>=1.2.0}, and \texttt{tabpfn>=2.0.0}
     \item \textbf{License:} MIT License
     \item \textbf{Any restrictions to use by non-academics:} None
 \end{itemize}
-Primary public datasets are accessible through the Alzheimer's Disease Neuroimaging Initiative (\url{https://adni.loni.usc.edu/}), OASIS-3 (\url{https://www.oasis-brains.org/}), the NCI Genomic Data Commons and cBioPortal TCGA PanCancer Atlas (\url{https://www.cbioportal.org/}), the Reactome Knowledgebase (\url{https://reactome.org/}), Camelyon17, and Zenodo NCT-CRC-HE-100K / CRC-VAL-HE-7K."""
+Primary public datasets are accessible through the Alzheimer's Disease Neuroimaging Initiative (\url{https://adni.loni.usc.edu/}), OASIS-3 (\url{https://www.oasis-brains.org/}), the NCI Genomic Data Commons and cBioPortal TCGA PanCancer Atlas (\url{https://www.cbioportal.org/}), the Reactome Knowledgebase (\url{https://reactome.org/}), Camelyon17, and Zenodo NCT-CRC-HE-100K / CRC-VAL-HE-7K. Participant-level ADNI and OASIS-3 tables cannot be redistributed directly under their Data Use Agreements. Local benchmark scripts consume harmonized credentialed CSV exports and pre-extracted feature caches rather than bundling raw LONI neuroimaging or raw WSI ingestion pipelines."""
         + artifact_note
         + r"""
 
@@ -401,20 +401,17 @@ def build_nature_communications_tex(parts: Dict[str, str]) -> str:
     )
 
     nc_abstract_body = (
-        r"Multimodal biomedical artificial intelligence is hindered by modality missingness, "
-        r"biomarker discordance, omics redundancy, and opaque decision heads. Here we present "
-        r"\texttt{DeepFuzzyTorch}, an open-source differentiable PyTorch library unifying "
-        r"intuitionistic Choquet fusion, hesitant ensemble consensus, T-norm fuzzy-rough reduction, "
-        r"concept-masked Takagi--Sugeno--Kang rules, and Pythagorean adaptation under five "
-        r"mathematical guarantees. Across 5,356 participants and 4,849 pathology records versus "
-        r"14 comparators, vacuity mapping ensures zero padding error, parity on ADNI "
-        r"Cohort~1 ($N=1,137$: $0.8270$; complete $N_{\text{comp}}=854$: $0.8371$), higher "
-        r"missingness retention ($\text{MRR}=0.9344$) than trees and TabPFN~v2, top 60-month "
-        r"conversion ($0.9419$), and OASIS-3 transfer ($0.8639$). Pure observed conflict "
-        r"$C_{\mathcal{O}}$ reaches $0.7000$ swap AUROC ($0.6542$ composite), rises $1.51\times$ "
-        r"in discordant ADNI ($p=1.75\times 10^{-17}$), and improves matched-coverage accuracy "
-        r"to $0.7764$ ($0.7826$ pure $C_{\mathcal{O}}$), while 20-gene TCGA reduction yields "
-        r"$0.7403$ vs.\ $0.6925$ AUROC ($q_{\mathrm{BH}}=0.0025$)."
+        r"Multimodal biomedical AI faces missing modalities, biomarker discordance, and opaque "
+        r"decisions. We present \texttt{DeepFuzzyTorch}, a curated PyTorch integration of "
+        r"fuzzy fusion, rough feature selection, interpretable rules, and test-time adaptation. "
+        r"Vacuity mapping guarantees exact $0.00$ fixed-width padding invariance for "
+        r"unacquired slots. Across 5,356 participants and 4,849 pathology records, empirical "
+        r"benchmarks show ADNI Cohort~1 AUROC of $0.8270$ ($N=1,137$) and $0.8371$ "
+        r"(complete $N_{\mathrm{comp}}=854$), missingness retention $\mathrm{MRR}=0.9344$, "
+        r"60-month conversion AUROC $0.9419$, and OASIS-3 transfer AUROC $0.8639$. "
+        r"Observed conflict detects swaps at $0.7000$ AUROC and is $1.51\times$ higher "
+        r"in discordant ADNI participants. A 20-gene TCGA reduct yields $0.7403$ versus "
+        r"$0.6925$ AUROC for the matched unreduced model."
     )
     raw_wc, plain_wc = count_abstract_words(nc_abstract_body)
     if raw_wc > 150 or plain_wc > 150 or r"\cite" in nc_abstract_body:
@@ -603,10 +600,10 @@ def build_nature_communications_tex(parts: Dict[str, str]) -> str:
 
     # 6. Dedicated Nature Portfolio Backmatter Sections (Data Availability, Code Availability, Author Contributions, Competing Interests)
     nc_backmatter = r"""\section*{Data Availability}
-All multi-center clinical, neuroimaging, multi-omics, and histopathology benchmarks analyzed in this study derive from publicly accessible cohorts: the Alzheimer's Disease Neuroimaging Initiative (ADNI Cohorts~1, 2, and Longitudinal; \url{https://adni.loni.usc.edu/}), OASIS-3 (\url{https://www.oasis-brains.org/}), the NCI Genomic Data Commons and cBioPortal TCGA PanCancer Atlas across seven cancer cohorts (\url{https://www.cbioportal.org/}), the Reactome Pathway Knowledgebase (\url{https://reactome.org/}), Camelyon17, and Zenodo NCT-CRC-HE-100K / CRC-VAL-HE-7K. Because participant-level ADNI and OASIS-3 tables are governed by third-party Data Use Agreements, local preprocessing scripts reconstruct them from credentialed downloads, while aggregated quantitative summary metrics (\texttt{results/\allowbreak benchmark\_\allowbreak results.json}), custom-background Reactome enrichment tables (\texttt{results/\allowbreak tcga\_\allowbreak top20\_\allowbreak reactome\_\allowbreak enrichment.json}), Markdown summary tables, and cryptographic SHA-256 digests (\texttt{results/\allowbreak reproducibility\_\allowbreak manifest.json}) are bundled in the public reproducibility repository.
+All multi-center clinical, neuroimaging, multi-omics, and histopathology benchmarks analyzed in this study derive from publicly accessible cohorts: the Alzheimer's Disease Neuroimaging Initiative (ADNI Cohorts~1, 2, and Longitudinal; \url{https://adni.loni.usc.edu/}), OASIS-3 (\url{https://www.oasis-brains.org/}), the NCI Genomic Data Commons and cBioPortal TCGA PanCancer Atlas across seven cancer cohorts (\url{https://www.cbioportal.org/}), the Reactome Pathway Knowledgebase (\url{https://reactome.org/}), Camelyon17, and Zenodo NCT-CRC-HE-100K / CRC-VAL-HE-7K. Because participant-level ADNI and OASIS-3 tables cannot be redistributed directly under third-party Data Use Agreements, local preprocessing scripts consume harmonized credentialed CSV exports and pre-extracted feature caches rather than bundling raw LONI neuroimaging or raw WSI pipelines, while aggregated quantitative summary metrics (\texttt{results/\allowbreak benchmark\_\allowbreak results.json}), custom-background Reactome enrichment tables (\texttt{results/\allowbreak tcga\_\allowbreak top20\_\allowbreak reactome\_\allowbreak enrichment.json}), Markdown summary tables, and cryptographic SHA-256 digests (\texttt{results/\allowbreak reproducibility\_\allowbreak manifest.json}) are bundled in the public reproducibility repository.
 
 \section*{Code Availability}
-The complete \texttt{DeepFuzzyTorch} (\texttt{v0.2.0}) PyTorch operator library, all baseline implementations (including \texttt{QMF}, \texttt{DDEF}, \texttt{FUML}, adapted \texttt{RCML}/\texttt{DrFuse}, \texttt{XGBoost}, \texttt{CatBoost}, and \texttt{TabPFN~v2}), automated multi-track benchmark and runtime profiling scripts (\texttt{benchmarks/*.py}), mathematical verification test suite (\texttt{tests/\allowbreak test\_\allowbreak operators\_\allowbreak and\_\allowbreak theorems.py}), synthetic quickstart demo (\texttt{examples/\allowbreak quickstart\_\allowbreak synthetic\_\allowbreak demo.py}), and one-click figure/table generators are released under the MIT License at \url{https://github.com/SUN-1024/DeepFuzzyTorch}.
+The complete \texttt{DeepFuzzyTorch} (\texttt{v0.2.1}) PyTorch operator library, all baseline implementations (including \texttt{QMF (adapted)}, \texttt{DDEF (adapted)}, \texttt{FUML (adapted)}, \texttt{RCML (adapted)}/\texttt{DrFuse (adapted)}, \texttt{XGBoost}, \texttt{CatBoost}, and \texttt{TabPFN~v2}), automated multi-track benchmark and runtime profiling scripts (\texttt{benchmarks/*.py}), mathematical verification test suite (\texttt{tests/\allowbreak test\_\allowbreak operators\_\allowbreak and\_\allowbreak theorems.py}), synthetic quickstart demo (\texttt{examples/\allowbreak quickstart\_\allowbreak synthetic\_\allowbreak demo.py}), and one-click figure/table generators are released under the MIT License at \url{https://github.com/SUN-1024/DeepFuzzyTorch}.
 
 \section*{Author Contributions}
 G.S. conceived the mathematical framework, designed and implemented the \texttt{DeepFuzzyTorch} PyTorch operator library, curated and audited the multi-center neuroimaging, pan-cancer transcriptomic, and computational pathology benchmarks, performed the statistical analyses, and wrote the manuscript.
@@ -698,14 +695,14 @@ _PROTECTED_LATEX_PHRASES: List[str] = sorted(
         r"Incomplete MRR (14 Subsets)",
         r"w/o Non-Additive Choquet",
         r"GatedAttention-Transformer",
-        r"QMF (\textit{ICML'23}, 4-Mod",
+        r"QMF (\textit{ICML'23}, adapt., 4-Mod",
         r"Matched \texttt{All-1000}",
         r"Apple Metal MPS supported",
         r"ECE $0.0461$ vs.\ $0.0651$",
         r"Joint Cold, No Brier/Aux",
         r"320 ROIs; No Reducer",
         r"Shared Fused AuxWeight",
-        r"NCT-CRC (\texttt{Discovery}",
+        r"NCT-CRC Binary (\texttt{Discovery}",
         r"Dempster--Shafer Fusion",
         r"w/o Fuzzy-Rough Gate",
         r"w/o Vacuity Masking",
@@ -714,7 +711,7 @@ _PROTECTED_LATEX_PHRASES: List[str] = sorted(
         r"Camelyon17 ($n=1,000$",
         r"EarlyConcat-MLP (",
         r"LateAvg-Ensemble (",
-        r"NCT-CRC ($n=1,350$",
+        r"NCT-CRC Binary ($n=1,350$",
         r"EvidentialDL (TMC",
         r"peaking at $k=12$",
         r"peaking at $k=28$",
@@ -725,6 +722,10 @@ _PROTECTED_LATEX_PHRASES: List[str] = sorted(
         r"(a+c_0)^p - a^p",
         r"v_i / \bar{v}",
         r"1 - 2^{-24}",
+        r"QMF (Zhang et al., \textit{ICML'23}, adapt.)",
+        r"QMF (\textit{ICML'23}, adapt.",
+        r"QMF (adapted",
+        r"NCT-CRC Binary (",
         r"QMF (Zhang",
         r"Full Model",
     },

@@ -2,7 +2,7 @@
 
 To comply strictly with third-party **Data Use Agreements (DUAs)** and institutional privacy policies, participant-level clinical CSV files (ADNI, OASIS-3) and large pre-extracted histopathology/omics binary `.npz` archives are **not** redistributed directly inside this public GitHub repository.
 
-All numerical results reported in the paper can be reproduced end-to-end by placing the credentialed source files under `data_benchmark/` as structured below:
+The benchmark scripts ingest harmonized credentialed CSV exports and pre-extracted feature caches; they do not bundle raw LONI neuroimaging preprocessing or whole-slide tiling pipelines. Prepare those inputs separately and place them under `data_benchmark/` as structured below to reproduce the reported benchmark stages:
 
 1. **ADNI (Alzheimer's Disease Neuroimaging Initiative — Tracks 1, 2, 3A)**
    - Apply for credentialed research access at https://adni.loni.usc.edu/.
@@ -23,6 +23,7 @@ All numerical results reported in the paper can be reproduced end-to-end by plac
 
 4. **Multi-Foundation-Model Computational Pathology Caches (Track 5)**
    - Public patch/tile datasets originate from **Camelyon17** (`N=2,500`) and **NCT-CRC-HE-100K / CRC-VAL-HE-7K** (`N=2,349`), with pre-extracted features from 6 foundation models (`uni2_h`, `phikon_v2`, `kaiko_vitl14`, `phikon`, `ctranspath`, `plip`) placed under `data_benchmark/wsi_data/multi_fm_features/`.
+   - The Track 5 NCT-CRC evaluation uses the binary tumor-or-stroma endpoint (`is_tumor_or_stroma`) derived from the original 9-class NCT-CRC-HE-100K / CRC-VAL-HE-7K datasets.
 
 5. **Synthetic End-to-End Quickstart (No External Downloads Required)**
    - Run unit tests & theorems:

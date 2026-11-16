@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deepfuzzy"
-version = "0.2.0"
+version = "0.2.1"
 description = "DeepFuzzyTorch: A Unified Differentiable Intuitionistic, Hesitant, and Fuzzy-Rough Granular Framework for Incomplete and Conflicting Multimodal Medical Learning"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -37,6 +37,8 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
 ]
+benchmark = ["xgboost>=1.7.0", "catboost>=1.2.0", "tabpfn>=2.0.0"]
+all = ["pytest>=7.0.0", "xgboost>=1.7.0", "catboost>=1.2.0", "tabpfn>=2.0.0"]
 
 [tool.setuptools.packages.find]
 where = ["."]
