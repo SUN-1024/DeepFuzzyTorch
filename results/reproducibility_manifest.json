@@ -1,6 +1,6 @@
 {
   "execution_command": "PYTHONPATH=. python benchmarks/update_r3_gpu_artifacts.py --relock-only",
-  "execution_timestamp_utc": "2026-11-16T00:59:04.204838+00:00",
+  "execution_timestamp_utc": "2026-11-16T01:10:05.686799+00:00",
   "execution_device": "cpu",
   "gpu_name": "CPU",
   "elapsed_seconds": 0.01,
@@ -103,7 +103,7 @@
     "benchmarks/build_companion_manuscripts.py": "4674630794369164199cf08d66a69e73daafca789f9c61c046424a987c9fe85c",
     "figures/fig0_redesign_20261108/generate_fig0_clean.py": "8ab2f5e38c320baaf1c7cd010d3c04452241928733f7481a52f360e206f2b63d",
     "pyproject.toml": "1b95a3f4d359cd8147023ef3b911d6fdaa083e5e205f17f87accf6d05a605690",
-    "README.md": "5fb282e9683431c565b6ef92d3f3e627240288c3c4e867e9c7ce1675619c102f"
+    "README.md": "bf21354d4eafd2c978b80f103bdda698548d38551fffce8c81f62c7b3bd57d49"
   },
   "artifact_sha256": {
     "results/benchmark_results.json": "adead5550736621f3d7157916f106993a1c52053237098a274721aaa77a188f5",
@@ -127,22 +127,22 @@
     "figures/Fig5_Clinical_DCA_Calibration_and_TSK_Rules.png": "880742b4f9102dd5c49cc5bd2c77d07552179aefc087dcb83852cbb2a4858da4",
     "figures/Fig6_HighDim_TCGA_Transcriptomic_Reduct_and_Reactome.pdf": "427c429ec14b5311b250e58929f09ad1827fbbf61fb49b8194217588f7c3ea05",
     "figures/Fig6_HighDim_TCGA_Transcriptomic_Reduct_and_Reactome.png": "9602bf6c24c594a408880115cc625e29352d20417ac0d061de0881c6282223de",
-    "results/latex_audit_report.json": "41d13476a29367d8758b42d280611733d02e0496a60bad1c2b238817044e4740",
+    "results/latex_audit_report.json": "fe3fb7d1dd6fc39f0d188103fb8db072eeb8fe1863a9aa25f95f1ef12df1e3c6",
     "figures/Fig0_Paradigm_Teaser_Comparison.pdf": "ef498c0b5ee9d1aaa32d9ac6b34e5414ae6e3c3cad0e0ac01947ccef88db0ee7",
     "figures/Fig0_Paradigm_Teaser_Comparison.png": "cb200b1d512e262d63fa052ccfbeee5ea09e58dba05cf6217b0d6e28b71665f6",
     "figures/Fig0_System_Architecture_Overview.pdf": "2425999d0fccb5946ed4adedb05e2054eb80fb81d059a31241e25dc7819c54c3",
     "figures/Fig0_System_Architecture_Overview.png": "6189b47dd806621fb8c2456f704340a99d9e397ddfa2e67f752112c7390b3c57",
     "paper/Highlights_Information_Fusion.md": "74c152aa5d2567fdaa7234d959ee795a66ad898f260eb474be30ac60e2ba3d66",
-    "paper/THEOREM_PROOFS_COMPLETE.md": "a5cdabf1b64bedeec66b92e992b8de7864ed6f819641f6328366c67533bbf9ef",
+    "paper/THEOREM_PROOFS_COMPLETE.md": "db673711e631a703f8901f8868d026a71166d61d4befaa873e1f9977eb72266a",
     "paper/references.bib": "a550c2f67bbff5fdd6b0eb95d1d683bdaa192b5da3fdce46cc96dbebfe26adb9",
-    "paper/manuscript_Information_Fusion.tex": "5acb983fca92bb24209574e636fffac6ad494cea7ec1b39e0333981935586e21",
+    "paper/manuscript_Information_Fusion.tex": "9408d1b95ccdbb102c2dfa5efaebe7cbeba9965f60ff83dbba02beb679eaa833",
     "paper/manuscript_Information_Fusion.bbl": "ef02abd5881b51a671c78fd7cc9a6f971d9898c44426726ad71f161e75f8a941",
-    "paper/manuscript_Information_Fusion.pdf": "cdf3ca8ebca54cb8ccb8dc273f18f1b3b7f9dd7984a30b9c1813cfd30f7f6244",
-    "paper/manuscript_Nature_Communications.tex": "16da3855a35d705651a91672a5d8810404695b4ffa3d3e7a57265ac09460c785",
+    "paper/manuscript_Information_Fusion.pdf": "161464f9bff69fba42b6930458261f53a966cbf4ce8cdb31cba7bee467af5970",
+    "paper/manuscript_Nature_Communications.tex": "fc13d8953bbde254f6d13d43794277ee96b572b6bef568dc1fc96f570e575bed",
     "paper/manuscript_Nature_Communications.bbl": "323b75b0574ddba906b3738b429b9ea958000da35e079b1102be7aac005f911a",
-    "paper/manuscript_Nature_Communications.pdf": "415341fe33f3e25bf8cb67754ecba0f8eceee1fdfff9adf13bb7f27d8a57c84d",
-    "paper/manuscript_Genome_Biology_Software.tex": "043de0b8b7e84dced463cab6c9535d808fdea9865410e69fa2953d97beb24222",
+    "paper/manuscript_Nature_Communications.pdf": "0e98b956df854c333407f8c0bd94c9709c83cf341eb5380c111a52128384000b",
+    "paper/manuscript_Genome_Biology_Software.tex": "2bcdc10bfc6728724e3526f4bf7009892fca104a6114e4531ca340dc2bf0a373",
     "paper/manuscript_Genome_Biology_Software.bbl": "0140cb660668b3667a977f813239114c8d4b23968f927fcbf55ec559c516c56c",
-    "paper/manuscript_Genome_Biology_Software.pdf": "e4272bfaa7755c7bddc36c03039ce5f9ee171e368f02a3b881082b7800f3b439"
+    "paper/manuscript_Genome_Biology_Software.pdf": "78571b01ba85d20a9f848f16f50af01ddd0c416ecf9ef62a2461356a39ae072b"
   }
 }

@@ -946,8 +946,8 @@ concentration by standardizing each coordinate via training-fold median and Gaus
 dispersion $\operatorname{MAD}_k = 1.4826\,\operatorname{med}_i|x_{i,k}-\operatorname{med}_k|$
 with robust scale $s_k = 4\cdot\operatorname{MAD}_k$ whenever $\operatorname{MAD}_k >
 10^{-6}$ ($4\cdot\operatorname{SD}_k$ fallback when $\operatorname{MAD}_k \le 10^{-6} <
-\operatorname{SD}_k$, and $s_k = 4.0$ whenever $\operatorname{SD}_k \le 10^{-6}$, including
-constant, near-constant, or all-missing columns):
+\operatorname{SD}_k$, and $s_k = 4.0$ when both $\operatorname{MAD}_k \le 10^{-6}$ and
+$\operatorname{SD}_k \le 10^{-6}$, including constant or all-missing columns):
 $\tilde{x}_{i,k} = (x_{i,k} - \operatorname{med}_k)/s_k$. Defining the 1D exponential Laplace
 similarity $R_{\{k\}}(x_i,x_j) = \exp(-|\tilde{x}_{i,k}-\tilde{x}_{j,k}|/\sigma)$
 ($\sigma=0.85$) and the classical Pawlak--Dubois--Prade pointwise minimum T-norm
@@ -2386,12 +2386,11 @@ indicators ($\mathbb{I}[o_{i,m}=1]$) and native/masked subset missingness during
 15-subset evaluation: (12) \texttt{XGBoost} \cite{chen2016xgboost} (native \texttt{NaN}
 branch routing), (13) \texttt{CatBoost} \cite{prokhorenkova2018catboost}
 (\texttt{nan\_mode='Min'}), and (14) \texttt{TabPFN~v2} \cite{hollmann2025tabpfn} (in-context
-tabular foundation transformer). By design, architectures whose primary inductive bias centers
-on
-transductive patient--modality bipartite graphs (\texttt{MUSE} \cite{wu2024muse}) or
-pathway-tokenized multimodal survival frameworks (\texttt{SurvPath} \cite{jaume2024survpath}
-and \texttt{EMMS} \cite{xing2026emms}) are positioned conceptually in Section~\ref{sec:related}
-rather than reconfigured outside their native graph/survival regimes, whereas single-visit
+tabular foundation transformer). By design, architectures built around transductive
+patient--modality bipartite graphs (\texttt{MUSE} \cite{wu2024muse}) or specialized multi-omic
+and WSI survival pipelines (\texttt{SurvPath} \cite{jaume2024survpath} and \texttt{EMMS}
+\cite{xing2026emms}) are positioned conceptually in Section~\ref{sec:related} rather than
+reconfigured outside their native graph/survival regimes, whereas single-visit
 vector-compatible fuzzy, evidential, and tabular comparators (\texttt{DDEF}, \texttt{FUML},
 \texttt{XGBoost}, \texttt{CatBoost}, and \texttt{TabPFN~v2}) are directly benchmarked under
 identical splits. To verify that performance does not stem solely from training-fold
