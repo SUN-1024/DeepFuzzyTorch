@@ -1440,7 +1440,7 @@ def main():
                 )
                 sel_oof_no_wsi_clin_prob[s_name][va_i] = out_snw["prob"].view(-1).numpy()
 
-        # Strictly nested 5,000 -> in-fold top-1,000 MAD -> in-fold Top-20 FuzzyRough sensitivity audit
+        # In-fold top-1,000 MAD re-screening inside pooled transductive 5,000-gene MAD cache -> in-fold Top-20 FuzzyRough sensitivity audit
         if X_raw_5000 is not None and raw_5000_symbols is not None:
             X5_tr_obs = X_raw_5000[tr_i_obs]
             with warnings.catch_warnings():

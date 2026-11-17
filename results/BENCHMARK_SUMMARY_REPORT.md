@@ -14,6 +14,8 @@
 
 > **Population & Imputation Accounting**: ADNI Cohort 1 ($N=1137$) includes $1.3\%$ missing MRI ($1,122/1137$), $23.3\%$ missing Plasma pTau181 ($872/1137$), $10.5\%$ missing FDG-PET ($1,018/1137$), and $0\%$ missingness for Clin as a modality ($6/1137$ [$0.53\%$] missing baseline `ADAS13` entries are imputed strictly in-fold using observed training-fold medians). Exactly $N_{\text{comp}}=854$ participants ($75.1\%$) have all four baseline modalities observed simultaneously.
 
+> **Cohort-1 BH Family**: The predeclared $m=20$ family includes 14 main comparators and 6 Table-3 component ablations. The 4 equal-loss/cold-start controls report raw paired $p$-values only; complete-case $N_{\text{comp}}=854$ paired tests reside in Table 1C.
+
 | Method | Full AUROC ($N=1137$, 95% CI) | Same-Visit AUROC ($n=924$) | Complete 4-Mod AUROC ($N_{\text{comp}}=854$) | AUPRC | Acc | F1 | Brier $\downarrow$ | ECE $\downarrow$ | AURC $\downarrow$ | 15-Subset Macro (Full / Elig) | MRR (14 Inc.) | Raw $p$ | BH $q_{\text{BH}}$ |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | EarlyConcat-MLP | 0.8212 (0.7961–0.8434) | 0.8304 | 0.8260 | 0.8693 | 0.7414 | 0.7443 | 0.1704 | 0.0431 | 0.1268 | 0.7690 / 0.7723 | 0.9318 | 0.350 | 0.769 |
@@ -120,7 +122,10 @@
 
 ## Table 4: Longitudinal Conversion (ADNI $N=1017$, In-Fold Tertile Log-Rank $p=3.34e-72$), 5-Seed Zero-Shot OASIS-3 ($N=1026$), & Plasma pTau217 Cohort 2 ($N=289$)
 
-| Method | ADNI 60m AUROC ($N=716$, 95% CI, BH $q$) | ADNI Survival C-Index | OASIS-3 5-Seed Dementia AUROC ($N=1026$, BH $q$) | OASIS-3 Strict AD-Source AUROC | Cohort 2 pTau217 AUROC ($N=289$ / 90d $n=211$) | Symmetric CKD Triage Acc (Comp $k/n$ / HesOnly) |
+
+> **Baseline Low-eGFR Note**: Exploratory Cohort-2 `eGFR_bl < 60` ($n=22$) uses a single baseline measurement and does not establish the $\ge 3$-month KDIGO chronicity criterion for clinical CKD diagnosis or exclude albuminuria.
+
+| Method | ADNI 60m AUROC ($N=716$, 95% CI, BH $q$) | ADNI Survival C-Index | OASIS-3 5-Seed Dementia AUROC ($N=1026$, BH $q$) | OASIS-3 Strict AD-Source AUROC | Cohort 2 pTau217 AUROC ($N=289$ / 90d $n=211$) | Symmetric Low-eGFR (<60) Triage Acc (Comp $k/n$ / HesOnly) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | EarlyConcat-MLP | 0.9373 (0.9155–0.9546) (q=0.569) | 0.8732 | 0.8433±0.0023 (q=0.028) | 0.8481 | 0.8695 / 0.8783 | 0.8500 (17/20) / 0.8500 (17/20) |
 | GatedAttention-Transformer | 0.9304 (0.9067–0.9497) (q=0.140) | 0.8700 | 0.8366±0.0079 (q=0.028) | 0.8547 | 0.8497 / 0.8554 | 0.8333 (15/18) / 0.8333 (15/18) |

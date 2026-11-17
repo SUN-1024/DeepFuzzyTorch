@@ -3846,7 +3846,7 @@
       }
     },
     "rough_summary": {
-      "evaluation_protocol": "5-fold strictly in-fold pointwise T-norm Fuzzy-Rough excess-dependency ranking (full training fold max_samples=4096, 5 stratified bootstrap views, K*=24 budget)",
+      "evaluation_protocol": "5-fold strictly in-fold pointwise T-norm Fuzzy-Rough excess-dependency ranking (full training fold max_samples=4096, 5 stratified without-replacement subsample views, K*=24 budget)",
       "selection_mode": "prespecified_top_k_greedy_excess_dependency",
       "dependency_curve": [
         0.2246,
@@ -53810,10 +53810,10 @@
       "conflict_ratio": 3.581156823221264,
       "mannwhitney_p": 0.0447576567530632,
       "categories": [
-        "Normal Renal\n($e\\mathrm{GFR} \\geq 60$, n=73)",
-        "Unmeasured\n($e\\mathrm{GFR}$ NA, n=194)",
-        "CKD Confounded\n($e\\mathrm{GFR} < 60$, Raw, n=22)",
-        "CKD Confounded\n(In-Fold P80 Triage, n=19/22)"
+        "Baseline eGFR >= 60\n($e\\mathrm{GFR} \\geq 60$, n=73)",
+        "Unmeasured Baseline eGFR\n($e\\mathrm{GFR}$ NA, n=194)",
+        "Baseline Low eGFR\n($e\\mathrm{GFR} < 60$, Raw, n=22)",
+        "Baseline Low eGFR\n(In-Fold P80 Triage, n=19/22)"
       ],
       "symmetric_composite_triage": {
         "DeepFuzzyTorch": {

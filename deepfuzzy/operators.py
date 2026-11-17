@@ -6812,8 +6812,11 @@ class DeepConceptTSKHead(nn.Module):
         f_{TSK,k}(z, m_z) = sum_{r=1}^R phi_bar_r(z, m_z) y_{r,k}(z, m_z).
 
     Supports complete structured/text rule parameter export across both binary (out_dim == 1)
-    and multi-class (out_dim > 1) heads, exact prediction reconstruction, and missing-concept
-    invariance (extending Theorem 2 end-to-end: exact `0.00` invariance across arbitrary
+    and multi-class (out_dim > 1) heads, with exact floating-point prediction reconstruction
+    from in-memory tensors and empirical O(max_r ||w_r||_1 * 1e-8) reconstruction discrepancy
+    from 8-decimal text rules on standardized bounded concepts with widths >= 0.20, rather
+    than a uniform bound over unbounded R^C. Supports missing-concept invariance
+    (extending Theorem 2 end-to-end: exact `0.00` invariance across arbitrary
     missing-input fill values at fixed tensor width, and algebraic equivalence in real arithmetic
     to the reduced observed-concept submodel within IEEE-754 float32 reduction-order rounding).
     """

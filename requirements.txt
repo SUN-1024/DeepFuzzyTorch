@@ -1,3 +1,4 @@
+# DeepFuzzyTorch v0.2.2 (Python >=3.9, <3.14; verified on Python 3.10-3.12; benchmark extra catboost requires Python <3.14)
 torch>=2.0.0
 numpy>=1.22.0
 scipy>=1.9.0

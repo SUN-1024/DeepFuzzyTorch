@@ -9,7 +9,7 @@ Executes 6 rigorous experimental tracks on real multi-center public cohorts:
              + Intra-Fold Conflict Sweep + Ablations.
   - Track 2: ADNI Cohort 2 (N=289, Plasma pTau217 + GFAP + MRI + Baseline FDG-PET + Clinical; n=211 <=90d window;
              90 shared RIDs with Cohort 1) + Real-World Physiological Conflict Subgroup Analysis across 3 Renal
-             Status Groups (Measured Normal eGFR >= 60 n=73, Measured CKD eGFR < 60 n=22, Unmeasured eGFR n=194).
+             Status Groups (Baseline eGFR >= 60 n=73, Baseline Low eGFR < 60 n=22, Unmeasured Baseline eGFR n=194).
   - Track 3: Track 3A — Dated ADNI Baseline Dementia-Free Longitudinal Incident Dementia Conversion (N=1,017,
              268 events; 60-month horizon N=716) with Mantel-Haenszel Log-Rank Test & Harrell's C-Index;
              Track 3B — Zero-Shot External Cross-Cohort Diagnostic Generalization (ADNI N=1,137 -> External
@@ -1035,7 +1035,7 @@ def run_track1_adni_main_missing_conflict_ablation(
     rough_summary = {
         "evaluation_protocol": (
             "5-fold strictly in-fold pointwise T-norm Fuzzy-Rough excess-dependency ranking "
-            "(full training fold max_samples=4096, 5 stratified bootstrap views, K*=24 budget)"
+            "(full training fold max_samples=4096, 5 stratified without-replacement subsample views, K*=24 budget)"
         ),
         "selection_mode": "prespecified_top_k_greedy_excess_dependency",
         "dependency_curve": [round(float(x), 4) for x in mean_dep_curve],
@@ -1843,7 +1843,7 @@ def run_track2_adni_cohort2_ptau217_and_ckd_conflict(
     print(
         f"  [Cohort 2 pTau217 N={N} (90d N={int(np.sum(strict_90d_mask))}, 176-Conc AUROC={cohort2_strict_176_concurrent_metrics['DeepFuzzyTorch']['auroc']:.4f})] "
         f"DeepFuzzyTorch AUROC={cohort2_metrics['DeepFuzzyTorch']['auroc']:.4f} | RCML={cohort2_metrics['RCML']['auroc']:.4f} | "
-        f"In-Fold MRI Jaccard={c2_rough_jaccard['mean']:.4f} | CKD Post-Triage={symmetric_composite_triage['DeepFuzzyTorch']['ckd_post_triage_k_n']}"
+        f"In-Fold MRI Jaccard={c2_rough_jaccard['mean']:.4f} | Low-eGFR (<60) Post-Triage={symmetric_composite_triage['DeepFuzzyTorch']['ckd_post_triage_k_n']}"
     )
     ckd_subgroup_dict: Dict[str, object] = {
         "triage_threshold_protocol": (
@@ -1866,10 +1866,10 @@ def run_track2_adni_cohort2_ptau217_and_ckd_conflict(
         "conflict_ratio": conflict_ratio,
         "mannwhitney_p": mw_pval,
         "categories": [
-            r"Normal Renal" + "\n" + rf"($e\mathrm{{GFR}} \geq 60$, n={int(np.sum(norm_mask))})",
-            r"Unmeasured" + "\n" + rf"($e\mathrm{{GFR}}$ NA, n={int(np.sum(unmeas_mask))})",
-            r"CKD Confounded" + "\n" + rf"($e\mathrm{{GFR}} < 60$, Raw, n={int(np.sum(ckd_mask))})",
-            r"CKD Confounded" + "\n" + rf"(In-Fold P80 Triage, n={n_ckd_retained}/{int(np.sum(ckd_mask))})",
+            r"Baseline eGFR >= 60" + "\n" + rf"($e\mathrm{{GFR}} \geq 60$, n={int(np.sum(norm_mask))})",
+            r"Unmeasured Baseline eGFR" + "\n" + rf"($e\mathrm{{GFR}}$ NA, n={int(np.sum(unmeas_mask))})",
+            r"Baseline Low eGFR" + "\n" + rf"($e\mathrm{{GFR}} < 60$, Raw, n={int(np.sum(ckd_mask))})",
+            r"Baseline Low eGFR" + "\n" + rf"(In-Fold P80 Triage, n={n_ckd_retained}/{int(np.sum(ckd_mask))})",
         ],
         "symmetric_composite_triage": symmetric_composite_triage,
         "symmetric_hes_only_triage": symmetric_hes_only_triage,
@@ -3241,6 +3241,7 @@ def main():
             track1["conflict_results"],
             track2["ckd_subgroup"],
             figures_dir,
+            allow_simulated_fallback=True,
         )
         f4 = plot_fig4_fuzzy_rough_and_multiomics(
             track1["rough_summary"],

@@ -1,6 +1,6 @@
 # `DeepFuzzyTorch`: A Unified Differentiable Intuitionistic, Hesitant, and Fuzzy-Rough Granular Framework for Incomplete and Conflicting Multimodal Medical Learning
 
-[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
+[![Python >= 3.9, < 3.14](https://img.shields.io/badge/Python-%3E%3D3.9%2C%3C3.14-blue.svg)](https://www.python.org/)
 [![PyTorch 2.0+](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c.svg)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
@@ -37,6 +37,8 @@
 ---
 
 ## 📦 Installation
+
+DeepFuzzyTorch requires Python >= 3.9, < 3.14 and has been verified on Python 3.10–3.12. The < 3.14 upper bound reflects upstream `catboost` binary wheel availability for the `[benchmark]` extra.
 
 ```bash
 git clone https://github.com/SUN-1024/DeepFuzzyTorch.git
@@ -136,11 +138,13 @@ Evaluated across **5,356 unique clinical & oncology participants** (`1,384` dedu
 | :--- | :--- | :--- |
 | **Track 0: Mathematical Audit** ($N=250$ Tuples, $40\times 40$ Grid, 50-Pt Sweep, $N_{\text{tok}}=45$) | Simplex closure, vacuity invariance, monotonicity, conflict inflation & rough bounds | Closure `5.96e-08`; missing-modality vacuity error **`0.00e+00`** ($w_{\text{miss}}=0.00$); fixed-conflict $\min \partial\mu/\partial\mu_1 = 0.2072$; rough violation `0.00e+00` |
 | **Track 1: ADNI Cohort 1** ($N=1,137$, 58 Sites, 4 Modalities; Complete 4M $N_{\text{comp}}=854$) | Baseline amyloid-$\beta$ PET/CSF classification ($6/1,137$ [$0.53\%$] missing `ADAS13` in-fold median imputed) & $2^4-1=15$ subsets | Full AUROC `0.8270` (`0.8387` same-visit $n=924$; `0.8371` [95% CI `0.8091–0.8612`] complete 4M $N_{\text{comp}}=854$); no statistically significant full-cohort AUROC difference after BH correction across 13 neural/evidential/GBDT comparators ($q_{\text{BH}} \ge 0.100$), including the 2023–2025 fusion models [`QMF (adapted)`, `RCML`, `DrFuse`, `DDEF`, `FUML`] ($q_{\text{BH}} \ge 0.260$); `TabPFN v2` leads significantly with full-cohort AUROC `0.8443` ($q_{\text{BH}}=0.040$); **`MRR=0.9344`** & 15-subset Macro-AUROC `0.7764` (vs. `FUML` `0.7790`, `TabPFN v2` `0.7635`, `CatBoost` `0.7405`, `XGBoost` `0.7056`); **pure $C_{\mathcal{O}}$ swap AUROC `0.7000`** ($0.6542$ composite, $0.5337$ pure $\pi_f$) & conflict 20%-triage `0.8302` ($\gamma=0.8$); TSK text rule reconstruction error **`2.384e-07`** |
-| **Track 2: Real-World Discordance & Cohort 2** ($N=1,112$ Unique ADNI; C2 $N=289$) | Strictly nested in-fold plasma/MRI/cognitive discordance triage & pTau217/GFAP screening | Discordance vs. concordance elevates conflict $C_{\mathcal{O}}$ **`1.51x`** ($n=198$ vs. $n=914$, Mann–Whitney **$p = 1.75 \times 10^{-17}$**); nested matched-coverage ECDF triage (`81.3%`, $161/198$) raises accuracy from `0.7475` to **`0.7764`** (`0.7826` pure $C_{\mathcal{O}}$; `0.7911` at $80\%$, eliminating GBDT threshold shrinkage `32.3%`–`50.0%`); Cohort 2 AUROC `0.8740` (`0.8844` on $\le 90$d $n=211$, $q_{\text{BH}} \ge 0.602$ across 12 comparators); exploratory CKD ($n=22$) Acc `0.8421` (`16/19`) |
+| **Track 2: Real-World Discordance & Cohort 2** ($N=1,112$ Unique ADNI; C2 $N=289$) | Strictly nested in-fold plasma/MRI/cognitive discordance triage & pTau217/GFAP screening | Discordance vs. concordance elevates conflict $C_{\mathcal{O}}$ **`1.51x`** ($n=198$ vs. $n=914$, Mann–Whitney **$p = 1.75 \times 10^{-17}$**); nested matched-coverage ECDF triage (`81.3%`, $161/198$) raises accuracy from `0.7475` to **`0.7764`** (`0.7826` pure $C_{\mathcal{O}}$; `0.7911` at $80\%$, eliminating GBDT threshold shrinkage `32.3%`–`50.0%`); Cohort 2 AUROC `0.8740` (`0.8844` on $\le 90$d $n=211$, $q_{\text{BH}} \ge 0.602$ across 12 comparators); exploratory baseline low eGFR (<60, $n=22$) Acc `0.8421` (`16/19`) |
 | **Track 3A & 3B: Longitudinal & OASIS-3** (ADNI $N=1,017$; OASIS-3 $N=1,026$) | 60-month MCI-to-dementia conversion & 5-seed zero-shot external transfer | **#1 60m conversion AUROC `0.9419`** & **#1 C-index `0.8804`** (in-fold tertile log-rank $p = 3.34 \times 10^{-72}$); **#1 5-seed external OASIS-3 Dementia AUROC `0.8639 ± 0.0010`** (`DrFuse (adapted)` $q_{\text{BH}}=0.024$, `GatedAttn`/`EarlyConcat` $q_{\text{BH}}=0.028$; Strict-AD source `0.8603`) |
 | **Track 4: 7-Cohort TCGA Pan-Cancer** ($N=2,946$; Unsupervised Transductive 1,000-MAD Pool) | 3-modality WSI+Omics fusion & **supervised in-fold** $1,000 \to K^*=20$ gene reduct | 3-Mod AUROC `0.7377`, **#1 OS C-index `0.7492`**, **#1 7-subset Macro-AUROC `0.6944`**; **#1 fusion-model 4-Mod Top-20 AUROC `0.7403`** & OS C-index `0.7514` (`3.61x` higher Jaccard `0.3816` vs. `MI-20` `0.1058` at `0.7417`, `mRMR-20` C-index `0.7528`, `MI-20` `0.7520`; vs. fair 1,000-gene `DeepFuzzyTorch` `0.6925`, **$q_{\text{BH}} = 0.0025$**); custom-BG ($N_{\text{bg}}=1,000$) Reactome ORA recovers **`8` pathways at BH $\text{FDR}<0.05$ across all `676` predeclared $K_{\text{bg}}\ge 2$ BG pathways** ($q_{\text{BH}}=0.0308$, led by `R-HSA-5686938`) |
 | **Track 5: 6-FM Pathology Consensus** (`Camelyon17` $N=2,500$; `NCT-CRC` $N=2,349$) | OOD hospital / cohort transfer & 1-corrupted-FM resilience (`PCA-64`, `uni2_h`/`phikon_v2`/`kaiko_vitl14`/`phikon`/`ctranspath`/`plip`); NCT-CRC binary tumor-or-stroma endpoint (`is_tumor_or_stroma`) derived from 9-class `NCT-CRC-HE-100K` / `CRC-VAL-HE-7K` | Under 1 corrupted FM: **`0.9925` AUROC** on Camelyon17 ($q_{\text{BH}}=0.010$ vs. `MeanPool` `0.9894` / `Logit-Tent (adapted)` `0.9893`) & **`0.9804` AUROC** on NCT-CRC ($q_{\text{BH}}=0.0025$ vs. `MeanPool` `0.9567` / `Logit-Tent (adapted)` `0.9561`) |
 | **Track 6: Runtime & Memory Scaling** ($N \in [64, 4096]$, $M \in [2, 16]$) | Wall-clock forward+backward latency & peak live tensor memory | Linear memory scaling (`1.8 MiB` at $N=64 \to 97.4\text{ MiB}$ / `26.60 ms` fwd+bwd at $N=4,096$, matching latency & `20.6%` lighter than `DrFuse (adapted)` `26.62 ms` / `122.6 MiB`); at $N=256, M=4$, `4.90 ms` / `4.6 MiB` after $K^*=20$ reduction from raw $D_m=5,000$ excludes offline reducer fitting and raw input processing; pre-reduction peak memory is `123.1 MiB` vs. `DrFuse (adapted)` `92.3 MiB`. Offline reducer fitting at $N=1,024, D=1,000$ costs `2.190 s` / `489.5 MiB` |
+
+A single baseline eGFR measurement does not establish the 3-month chronicity required by KDIGO.
 
 > **AURC Tie-Group Convention**: `deepfuzzy.metrics.compute_aurc` averages empirical 0–1 errors within equal-uncertainty tie blocks for permutation invariance, whereas frozen `results/benchmark_results.json` retains execution-time index-ordered tie breaking (`31/39` Track 1–4 models—including all 4 `DeepFuzzyTorch` entries—agree to `0.00e+00`, `8/39` baseline/ablation AURCs differ by $\le 1.92 \times 10^{-5}$, and all `39/39` are identical at 4 decimal places).
 
@@ -203,7 +207,7 @@ The `paper/` directory provides **three mutually exclusive single-submission LaT
 ```text
 Fuzzy/
 ├── deepfuzzy/
-│   ├── __init__.py                     # Public API exports (v0.2.1)
+│   ├── __init__.py                     # Public API exports (v0.2.2)
 │   ├── operators.py                    # 5 core differentiable fuzzy/granular operators + UnifiedDeepFuzzyModel
 │   ├── baselines.py                    # Neural/evidential/fuzzy comparators (incl. QMF (adapted), RCML, DrFuse, DDEF, FUML)
 │   ├── missing_benchmark.py            # 2^M - 1 combinatorial & stress-curve missing-modality evaluator

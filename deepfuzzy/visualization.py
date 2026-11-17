@@ -17,6 +17,7 @@ import re
 import shutil
 import sys
 import tempfile
+import warnings
 from typing import Dict, List, Optional
 import numpy as np
 
@@ -908,6 +909,7 @@ def plot_fig3_conflict_and_abstention(
     conflict_results: Dict[str, object],
     ckd_subgroup_results: Dict[str, object],
     out_dir: str,
+    allow_simulated_fallback: bool = False,
 ) -> Dict[str, str]:
     """
     Figure 3: Cross-Modality Evidence Conflict Stress Test, Patient-Level Raincloud
@@ -1128,6 +1130,7 @@ def plot_fig3_conflict_and_abstention(
     rw_audit = ckd_subgroup_results.get("real_world_discordance_audit", None)
     npz_opt = _load_optional_npz(out_dir)
 
+    is_simulated_d = False
     if npz_opt is not None and "adni1_real_discordant_mask" in npz_opt:
         c1_conf = npz_opt["adni1_conf_DeepFuzzyTorch"]
         c2_conf = npz_opt["adni2_conf_DeepFuzzyTorch"]
@@ -1140,6 +1143,19 @@ def plot_fig3_conflict_and_abstention(
         conc_vals = np.concatenate([c1_conf[k1], c2_conf[k2 & u2]])
         disc_vals = np.concatenate([c1_conf[d1], c2_conf[d2 & u2]])
     else:
+        if not allow_simulated_fallback:
+            raise RuntimeError(
+                "oof_predictions_and_splits.npz with 'adni1_real_discordant_mask' is required to "
+                "plot patient-level Panel (d) discordance in Figure 3; pass "
+                "allow_simulated_fallback=True to render an explicitly labeled synthetic preview."
+            )
+        warnings.warn(
+            "Rendering simulated synthetic preview in Figure 3 Panel (d) because "
+            "'adni1_real_discordant_mask' was not found in oof_predictions_and_splits.npz.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        is_simulated_d = True
         rng = np.random.default_rng(42)
         conc_vals = np.clip(rng.normal(0.1250, 0.055, 914), 0.01, 0.42)
         disc_vals = np.clip(rng.normal(0.1883, 0.068, 198), 0.02, 0.46)
@@ -1175,19 +1191,26 @@ def plot_fig3_conflict_and_abstention(
     ratio_dedup = float(rw_audit["dedup_conflict_ratio"]) if rw_audit else 1.51
     c_ratio = float(ckd_subgroup_results.get("conflict_ratio", 2.84))
     p_ckd = float(ckd_subgroup_results.get("mannwhitney_p", 0.0517))
+    box_prefix = "[SIMULATED PREVIEW]\n" if is_simulated_d else ""
     ax4_rain.text(
         0.04, 0.98,
-        f"N={n_unique_tot:,}: {ratio_dedup:.2f}x\n(p={p_dedup:.1e})\n"
-        f"CKD: {c_ratio:.2f}x\n(p={p_ckd:.3f})",
-        transform=ax4_rain.transAxes, va="top", ha="left", fontsize=11.2,
+        f"{box_prefix}"
+        f"$C_{{\\mathcal{{O}}}}$ (N={n_unique_tot:,}): {ratio_dedup:.2f}x\n"
+        f"(p={p_dedup:.1e})\n"
+        f"Dir. $\\mathrm{{A\\beta^-}}$ (<60, 6v22):\n"
+        f"{c_ratio:.2f}x (p={p_ckd:.3f})",
+        transform=ax4_rain.transAxes, va="top", ha="left", fontsize=9.4,
         bbox=dict(boxstyle="round,pad=0.22", facecolor="#FFFBF2", edgecolor=PALETTE["DeepFuzzyTorch"], lw=0.8, alpha=0.95),
     )
     ax4_rain.set_yticks([0, 1])
     ax4_rain.set_yticklabels([g[3] for g in rain_groups], fontsize=11.2, weight="bold")
-    ax4_rain.set_ylim(-0.36, 2.38)
+    ax4_rain.set_ylim(-0.36, 2.55)
     ax4_rain.set_xlim(0.0, x_rain_max)
     ax4_rain.set_xlabel("Conflict C_O", fontsize=11.6)
-    ax4_rain.set_title("(d) Discordance", loc="left", pad=6, fontsize=12.6)
+    ax4_rain.set_title(
+        "(d) Discordance [SIMULATED]" if is_simulated_d else "(d) Discordance",
+        loc="left", pad=6, fontsize=12.6,
+    )
 
     matched_cov_d = rw_audit.get("matched_coverage_referral", None) if isinstance(rw_audit, dict) else None
     if matched_cov_d is not None and "composite_nested_ecdf" in matched_cov_d:
@@ -1262,8 +1285,8 @@ def plot_fig3_conflict_and_abstention(
             categories = [
                 f"C1 Disc.\n(n={n_c1_u})",
                 f"Dedup\n(n={n_dd_u})",
-                f"CKD All\n(n={n_ckd_all})",
-                "CKD Tri.\n(80%)",
+                f"Low-eGFR\n(n={n_ckd_all})",
+                "eGFR<60 Tri.\n(80%)",
             ]
             active_tm_d = [
                 m for m in triage_models_d
@@ -1284,8 +1307,8 @@ def plot_fig3_conflict_and_abstention(
             categories = [
                 f"Norm\n(n={n_norm})",
                 f"Unmeas\n(n={n_unm})",
-                f"CKD\n(n={n_ckd_all})",
-                "CKD Tri.",
+                f"eGFR<60\n(n={n_ckd_all})",
+                "eGFR<60 Tri.",
             ]
             active_tm_d = [m for m in triage_models_d if f"{m}_spec" in ckd_subgroup_results]
             tm_vals_d = {m: [float(v) for v in ckd_subgroup_results[f"{m}_spec"]] for m in active_tm_d}
@@ -1336,7 +1359,7 @@ def plot_fig3_conflict_and_abstention(
         ax4_triage.set_ylim(-1.35, len(categories) - 0.15)
         ax4_triage.set_xlim(min(0.66, min(all_tr_v) - 0.045), max(1.03, max(all_tr_v) + 0.15))
         ax4_triage.set_xlabel("Accuracy", fontsize=11.6)
-        ax4_triage.set_title("CKD & Disc. Triage", loc="left", pad=6, fontsize=12.4)
+        ax4_triage.set_title("Low-eGFR & Disc. Triage", loc="left", pad=6, fontsize=12.4)
         ax4_triage.legend(loc="lower center", ncol=2, frameon=True, framealpha=0.94, fontsize=11.2, columnspacing=0.6, handletextpad=0.25)
 
     return _save_fig(fig, out_dir, "Fig3_Conflict_Injection_and_Selective_Referral")

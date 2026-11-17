@@ -3745,6 +3745,132 @@ def test_phase1_5_tie_order_boltzmann_and_doc_audit():
     assert abs(q_check["c"] - q_check["b"]) < 1e-12 and q_check["d"] == 1.0
 
 
+def test_phase1_6_r3_surgical_fixes_and_doc_audit():
+    """Check PFS boundary reliability, singleton fusion, and release artifacts."""
+    from pathlib import Path
+
+    import deepfuzzy
+
+    # The vacuous row has q_P=1; the upper clamp keeps it reliable at tau_P=1.
+    tta = PythagoreanFuzzyTTALoss(hesitancy_threshold=1.0, diversity_weight=0.25)
+    for dtype in (torch.float64, torch.float32):
+        inputs = IntuitionisticFuzzyTensor(
+            mu=torch.tensor([[0.8], [0.0]], dtype=dtype),
+            nu=torch.tensor([[0.1], [0.0]], dtype=dtype),
+            pi=torch.tensor([[0.1], [1.0]], dtype=dtype),
+        )
+        out = tta(inputs)
+        assert out["pi_p"][1].item() == 1.0
+        assert abs(out["reliable_fraction"].item() - 1.0) < 1e-12
+
+    fusion = IFSChoquetFusion(num_modalities=3, conflict_penalty=0.8).double()
+
+    def ifn(mu, nu, pi):
+        return IntuitionisticFuzzyTensor(
+            *(torch.tensor([[value]], dtype=torch.float64) for value in (mu, nu, pi))
+        )
+
+    active = ifn(0.4, 0.3, 0.3)
+    vacuous = ifn(0.0, 0.0, 1.0)
+    fused, aux = fusion([active, vacuous, vacuous])
+    assert aux["conflict"].item() == 0.0
+    torch.testing.assert_close(
+        torch.stack((fused.mu, fused.nu, fused.pi)).flatten(),
+        torch.tensor([0.4, 0.3, 0.3], dtype=torch.float64),
+        rtol=0.0,
+        atol=1e-15,
+    )
+    fused, aux = fusion([active, active, vacuous])
+    assert abs(aux["conflict"].item() - 0.24) < 1e-14
+    assert fused.pi.item() > 0.3
+
+    assert deepfuzzy.__version__ == "0.2.2"
+    project_text = Path(_REPO_ROOT, "pyproject.toml").read_text(encoding="utf-8")
+    assert 'version = "0.2.2"' in project_text
+    assert 'requires-python = ">=3.9,<3.14"' in project_text
+
+    with Path(_REPO_ROOT, "results", "benchmark_results.json").open(encoding="utf-8") as stream:
+        ledger = json.load(stream)
+    track1 = ledger["track1_adni_cohort1"]
+    table = track1["main_table"]
+    assert abs(table["Ablation_wo_ConflictDiscount"]["referral_20pct_auroc_g08"] - 0.8355183) < 1e-5
+    assert abs(table["Ablation_wo_ConflictDiscount"]["referral_20pct_auroc_hes_only_g08"] - 0.8291610) < 1e-5
+    assert abs(table["DeepFuzzyTorch"]["referral_20pct_auroc_hes_only_g08"] - 0.8307120) < 1e-5
+    rough_summary = track1.get("fuzzy_rough_summary", track1.get("rough_summary"))
+    assert rough_summary is not None, "Missing Cohort-1 fuzzy-rough summary"
+    protocol = rough_summary["evaluation_protocol"]
+    assert "without-replacement subsample views" in protocol, protocol
+    assert "bootstrap views" not in protocol, protocol
+    categories_text = "\n".join(ledger["track2_adni_cohort2_ptau217"]["ckd_subgroup"]["categories"])
+    assert "CKD Confounded" not in categories_text
+    assert "Normal Renal" not in categories_text
+    run_full_src = Path(_REPO_ROOT, "benchmarks", "run_full_benchmark.py").read_text(encoding="utf-8")
+    assert "CKD Confounded" not in run_full_src
+    assert "Normal Renal" not in run_full_src
+    assert "Measured CKD" not in run_full_src
+    assert "CKD Post-Triage" not in run_full_src
+    manifest_text = Path(_REPO_ROOT, "results", "reproducibility_manifest.json").read_text(encoding="utf-8")
+    assert "85-entry SHA-256 inventory" in manifest_text
+
+    highlights_path = Path(_REPO_ROOT, "paper", "Highlights_Information_Fusion.md")
+    if highlights_path.exists():
+        bullets = [
+            line for line in highlights_path.read_text(encoding="utf-8").splitlines()
+            if line.startswith("- ")
+        ]
+        assert len(bullets) == 5
+        assert all("$" not in line and len(line) <= 85 for line in bullets)
+
+    import re as _re
+    regressed_patterns = (
+        r"measured\s+CKD",
+        r"Measured\s+Chronic\s+Kidney\s+Disease",
+        r"preventing\s+the\s+severe\s+overfitting",
+        r"preventing\s+matched-architecture\s+\\texttt\{All-1000\}\s+overfitting",
+        r"where\s+20\\%\s+referral\s+ranks\s+solely",
+        r"pre-cutoff\s+R-FUML",
+        r"5\s+stratified\s+bootstrap\s+views",
+        r"Section~5\.2",
+        r"Section~4\.1",
+    )
+    for name in (
+        "manuscript_Information_Fusion.tex",
+        "manuscript_Genome_Biology_Software.tex",
+        "manuscript_Nature_Communications.tex",
+    ):
+        manuscript_path = Path(_REPO_ROOT, "paper", name)
+        if manuscript_path.exists():
+            manuscript = manuscript_path.read_text(encoding="utf-8")
+            for pat in regressed_patterns:
+                assert _re.search(pat, manuscript) is None, (name, pat)
+            assert r"\ref{sec:ablation}" in manuscript, name
+            assert r"\ref{sec:cohorts}" in manuscript, name
+
+    references = Path(_REPO_ROOT, "paper", "references.bib").read_text(encoding="utf-8")
+    assert "theerens2022choquet" in references
+    assert "mahmoodlab2025uni2h" in references
+
+    import tempfile
+    import deepfuzzy.visualization as df_viz
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        orig_ws = df_viz.WORKSPACE_ROOT
+        df_viz.WORKSPACE_ROOT = tmpdir
+        try:
+            try:
+                df_viz.plot_fig3_conflict_and_abstention(
+                    track1["conflict_results"],
+                    ledger["track2_adni_cohort2_ptau217"]["ckd_subgroup"],
+                    tmpdir,
+                )
+                raised = False
+            except RuntimeError:
+                raised = True
+        finally:
+            df_viz.WORKSPACE_ROOT = orig_ws
+        assert raised, "plot_fig3_conflict_and_abstention must fail loudly when real npz masks are missing"
+
+
 def run_all_verifications():
     print("=" * 72)
     print("DeepFuzzyTorch: Verifying Core Operators, Theorems & Statistical Suite")
@@ -3787,6 +3913,7 @@ def run_all_verifications():
         (test_phase1_conflict_sweep_separated_aurocs, "[PASS] Phase-1 Separated Conflict-Only / Hesitancy-Only / Composite Sweep AUROCs"),
         (test_phase1_ddef_and_fuml_baselines, "[PASS] Phase-1 DDEF (Inf. Fusion'24) & FUML (ICML'25) Baselines & Vacuity Invariance"),
         (test_phase1_5_tie_order_boltzmann_and_doc_audit, "[PASS] Phase-1.5 Theorem Tie-Order Guard, Boltzmann tau>=1 vs <1 & Packaging Audit"),
+        (test_phase1_6_r3_surgical_fixes_and_doc_audit, "[PASS] Phase-1.6 PFS Clamp, Singleton Fusion & Release Artifact Audit"),
     ]
     declared_test_names = {
         name for name, obj in globals().items() if name.startswith("test_") and callable(obj)

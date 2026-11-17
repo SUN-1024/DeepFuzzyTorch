@@ -106,6 +106,9 @@ def generate_markdown_summary(res: Dict[str, Any]) -> str:
         f"> **Population & Imputation Accounting**: ADNI Cohort 1 ($N={n_c1}$) includes $1.3\\%$ missing MRI ($1,122/{n_c1}$), $23.3\\%$ missing Plasma pTau181 ($872/{n_c1}$), $10.5\\%$ missing FDG-PET ($1,018/{n_c1}$), and $0\\%$ missingness for Clin as a modality ($6/{n_c1}$ [$0.53\\%$] missing baseline `ADAS13` entries are imputed strictly in-fold using observed training-fold medians). Exactly $N_{{\\text{{comp}}}}={n_c1_comp}$ participants ($75.1\\%$) have all four baseline modalities observed simultaneously.\n"
     )
     md.append(
+        f"> **Cohort-1 BH Family**: The predeclared $m=20$ family includes 14 main comparators and 6 Table-3 component ablations. The 4 equal-loss/cold-start controls report raw paired $p$-values only; complete-case $N_{{\\text{{comp}}}}={n_c1_comp}$ paired tests reside in Table 1C.\n"
+    )
+    md.append(
         f"| Method | Full AUROC ($N={n_c1}$, 95% CI) | Same-Visit AUROC ($n={n_c1_bl}$) | Complete 4-Mod AUROC ($N_{{\\text{{comp}}}}={n_c1_comp}$) | AUPRC | Acc | F1 | Brier $\\downarrow$ | ECE $\\downarrow$ | AURC $\\downarrow$ | 15-Subset Macro (Full / Elig) | MRR (14 Inc.) | Raw $p$ | BH $q_{{\\text{{BH}}}}$ |"
     )
     md.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
@@ -339,7 +342,12 @@ def generate_markdown_summary(res: Dict[str, Any]) -> str:
         f"\n## Table 4: Longitudinal Conversion (ADNI $N={n_long}$, In-Fold Tertile Log-Rank $p={t3['logrank_p']:.2e}$), 5-Seed Zero-Shot OASIS-3 ($N={n_oa}$), & Plasma pTau217 Cohort 2 ($N={n_c2}$)\n"
     )
     md.append(
-        f"| Method | ADNI 60m AUROC ($N={n_60m}$, 95% CI, BH $q$) | ADNI Survival C-Index | OASIS-3 5-Seed Dementia AUROC ($N={n_oa}$, BH $q$) | OASIS-3 Strict AD-Source AUROC | Cohort 2 pTau217 AUROC ($N={n_c2}$ / 90d $n={n_c2_90d}$) | Symmetric CKD Triage Acc (Comp $k/n$ / HesOnly) |"
+        "\n> **Baseline Low-eGFR Note**: Exploratory Cohort-2 `eGFR_bl < 60` ($n=22$) uses a "
+        "single baseline measurement and does not establish the $\\ge 3$-month KDIGO chronicity "
+        "criterion for clinical CKD diagnosis or exclude albuminuria.\n"
+    )
+    md.append(
+        f"| Method | ADNI 60m AUROC ($N={n_60m}$, 95% CI, BH $q$) | ADNI Survival C-Index | OASIS-3 5-Seed Dementia AUROC ($N={n_oa}$, BH $q$) | OASIS-3 Strict AD-Source AUROC | Cohort 2 pTau217 AUROC ($N={n_c2}$ / 90d $n={n_c2_90d}$) | Symmetric Low-eGFR (<60) Triage Acc (Comp $k/n$ / HesOnly) |"
     )
     md.append("| :--- | :---: | :---: | :---: | :---: | :---: | :---: |")
     t4_models = [
