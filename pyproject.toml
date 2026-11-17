@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deepfuzzy"
-version = "0.2.2"
+version = "0.2.3"
 description = "DeepFuzzyTorch: A Unified Differentiable Intuitionistic, Hesitant, and Fuzzy-Rough Granular Framework for Incomplete and Conflicting Multimodal Medical Learning"
 readme = "README.md"
 requires-python = ">=3.9,<3.14"

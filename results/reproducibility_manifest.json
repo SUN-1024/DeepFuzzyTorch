@@ -1,6 +1,6 @@
 {
   "execution_command": "PYTHONPATH=. python benchmarks/update_r3_gpu_artifacts.py --relock-only",
-  "execution_timestamp_utc": "2026-11-17T01:08:09.663607+00:00",
+  "execution_timestamp_utc": "2026-11-17T05:36:15.655888+00:00",
   "execution_device": "cpu",
   "gpu_name": "CPU",
   "elapsed_seconds": 0.01,
@@ -23,7 +23,7 @@
     },
     "stage5_sha256_reproducibility_lock": {
       "script": "benchmarks/update_r3_gpu_artifacts.py",
-      "description": "Fold preprocessor replay verification, Fold 0 checkpoint archive, publication figures, compiled manuscripts, and 85-entry SHA-256 inventory."
+      "description": "Fold preprocessor replay verification, Fold 0 checkpoint archive, publication figures, compiled manuscripts, and 89-entry SHA-256 inventory."
     }
   },
   "environment_lock": {
@@ -83,7 +83,7 @@
     "data_benchmark/wsi_data/tcga_uni2h/TCGA-UCEC_uni2h_slides.npz": "73f6ba914f454ebb6e4116ebdd7f7e208f63581ccf825e352b10ee141ac9a855"
   },
   "code_sha256": {
-    "deepfuzzy/__init__.py": "ba8342598bec526db5040a8df5e1c4883aaa6d15a7b0e5d8cf5fbe0b4dfddc48",
+    "deepfuzzy/__init__.py": "124c0126ca5a259aaf5646ad3950b99fb9a4c1dd28b2a30f4985830078f38f4a",
     "deepfuzzy/operators.py": "f0ae27d6f30785c0d79e6914313b4bb66972710a616e2e06f758c1df5d666775",
     "deepfuzzy/baselines.py": "f32bd8939c06bfc5982f6fade5f122455de878d60802038e3b38bf078e7db785",
     "deepfuzzy/missing_benchmark.py": "93fb39c9680e3a4a405d0a86e460e107206924e22a8baf740e86435d066c1da4",
@@ -95,19 +95,23 @@
     "benchmarks/run_full_benchmark.py": "d8f47b9c7337cfdcec0cfcce90faeb99cbfa5260848a6b5ffa2de18b723c7cbd",
     "benchmarks/run_upgrades_and_pathway_audit.py": "f13f880a4848fac5ae7af8b44e46c57d01deeb3bc0ec415816fdddb18409c912",
     "benchmarks/run_if_phase1_upgrades.py": "5a430952f7727e989e489966815d632fa084f3fd015523894ee5a23f7fb91200",
+    "benchmarks/run_tabpfn_deepfuzzy_plugin.py": "29dc5a087f531b81d00fd548394beb9ce57ecca12f521e4050c5ada7f6829d9c",
     "benchmarks/run_runtime_vram_benchmark.py": "5dc2689ee6f967b71112637181375200019fbdea7de207e14734e15affd67787",
-    "benchmarks/update_r3_gpu_artifacts.py": "768055348e19cb61acf1a8f0015950031e84229f8eaae19e583894aec512b28a",
+    "benchmarks/update_r3_gpu_artifacts.py": "2bf952ed76fcf0756bc4846c499b469b8cf1522e8e4be51f001c06570143b63a",
     "benchmarks/export_tables_and_manuscript.py": "2f49e2539a38b35dc897fc5b02390b1e71e34de97223bf371333491d174462b3",
     "examples/quickstart_synthetic_demo.py": "8ef1f1b9aa20a9b4e7d182b87b8a399aa04634b0b7ea0c64dd321370648d5dd4",
-    "tests/test_operators_and_theorems.py": "6b16b32871c0f45b51d1f286d25363956a51281e93e2f7dc8abea627e6486062",
-    "benchmarks/build_companion_manuscripts.py": "a838f13a20b07e235edb4af7698d3cb6b4ac9776e42ecd73d2bb24576a831560",
+    "tests/test_operators_and_theorems.py": "299cfb0a7d8b796d7c322fe1413977bf16af754e3014ee5b3e210e298484d81a",
+    "benchmarks/build_companion_manuscripts.py": "e94845cf65cb50062914fb70c9d0676c56163f17aa6d0d074c9cef62ef268e8d",
     "figures/fig0_redesign_20261108/generate_fig0_clean.py": "107c2945059159d7557161c1bc9f081183d0d21127487797c1fe2f067b682031",
-    "pyproject.toml": "cff82fad40c4a65ee76806c9ad9290366834f92fc8b478f706d513ecd22b997c",
-    "README.md": "f1ce566f1ec77101da013a7fe8497d5f560a789707810571c98f4bec76613dfb"
+    "pyproject.toml": "92a6e8ac3db19572db63275106c50f7372694498ca0f0ab3b7d93922c0f93ccb",
+    "README.md": "5512ca31cfe3f4191af6cb8cdbef2c5fe69072fa9b4771bdefbbbfe0e726a26e"
   },
   "artifact_sha256": {
     "results/benchmark_results.json": "3528abae22cf8dc896564681657f34b0eae1299dcfd5d0435441777941848a5f",
     "results/oof_predictions_and_splits.npz": "4070000490bc86851e24e4b8deef57f373a5a86045feab61cf51f8cd77c6996c",
+    "results/tabpfn_deepfuzzy_plugin_audit.json": "18d3ca406dfd13dfadf878e55c55998d952c7cf5349ad137b84b2f3a8672c25f",
+    "results/TABPFN_DEEPFUZZY_PLUGIN_SUMMARY.md": "c54e9074a3f54087deddddbd28024332c92a079b9b47f2292c07482686d0f8e0",
+    "results/tabpfn_plugin_oof_arrays.npz": "79035f5f0b976700720ff3237d294a64331128f895d4bc5a528662c642b43e9e",
     "results/tcga_top20_reactome_enrichment.json": "b812909757766c70a837e2f38906ef1beeda6364d2d92683b7891155f8addefe",
     "results/tcga_top20_reactome_pathways.csv": "af43a5cf8b1ff3ff77d412de52c1ec7fe17d492776b5b817a94ae6bd6c8ea274",
     "results/runtime_vram_benchmark.json": "65cf94161ea8eaa035c90fb4191d53ea42288dff83052f2d86c0a752b4791806",
@@ -127,7 +131,7 @@
     "figures/Fig5_Clinical_DCA_Calibration_and_TSK_Rules.png": "880742b4f9102dd5c49cc5bd2c77d07552179aefc087dcb83852cbb2a4858da4",
     "figures/Fig6_HighDim_TCGA_Transcriptomic_Reduct_and_Reactome.pdf": "29bafd8623454ccc5c87fc7b6ed41ecd50ca80c40949e6c593d6f1183c49ed40",
     "figures/Fig6_HighDim_TCGA_Transcriptomic_Reduct_and_Reactome.png": "9602bf6c24c594a408880115cc625e29352d20417ac0d061de0881c6282223de",
-    "results/latex_audit_report.json": "df870aa8cd5e5d84f907a14a22733d7ebd50edb518190c7671f30e15323b3270",
+    "results/latex_audit_report.json": "eeb5bda45e49ec49d36bda4dfc992a4037643278f2a2f75a9ceffdb21495d3b4",
     "figures/Fig0_Paradigm_Teaser_Comparison.pdf": "787249637cd7484ea7b0212969d9b5bfea1ed3bea189d7c0babbfd1062b57892",
     "figures/Fig0_Paradigm_Teaser_Comparison.png": "037ad7feee16a2da67a9f5c99f589b4055c8a4234bf67cd2726c47eba680ef64",
     "figures/Fig0_System_Architecture_Overview.pdf": "cf83055f7ec6dd1c035800304e9710c8e105e286ec9f67810b5ca6bc5227e40a",
@@ -135,14 +139,14 @@
     "paper/Highlights_Information_Fusion.md": "e99b5dcb7cb00fdaad4f62d2ff6c0b62dfc8b3639d39d8e0de15f3105864d41a",
     "paper/THEOREM_PROOFS_COMPLETE.md": "754351f1cbca29c49a42a4656b466af0e010507d0ee3bee724a58b67930f57f6",
     "paper/references.bib": "1939949f559bb770704a923a2a34fb4cad1cf2e1cbc4be0d8cfda05ad9155e9e",
-    "paper/manuscript_Information_Fusion.tex": "dc9013cf95082d344e73358932693a6b364f32ec64d9136e0942505fab6dfba3",
+    "paper/manuscript_Information_Fusion.tex": "1b7a15c76f3c1544e5da4bb4c5eb8f276465e0180cfe47e48cf7a430badf9b93",
     "paper/manuscript_Information_Fusion.bbl": "a89837361a91a889acc8ca381d6915b539d8c02d8f2477e37907a08f7868120d",
-    "paper/manuscript_Information_Fusion.pdf": "abcff0f5a21613de42e86db3356bb39dd0710d7fa291dc94b0ab4cfb8fd4a0aa",
-    "paper/manuscript_Nature_Communications.tex": "67ef5e15aecd60c5613a533e0d7d685baf3d457ca9ae32edadaf3b884af2a3a0",
+    "paper/manuscript_Information_Fusion.pdf": "41384039ed48fb1644c928dfc96925c95c2f33799d2a0bdbf8b676fc4426c7e8",
+    "paper/manuscript_Nature_Communications.tex": "06fc9232f02a752e2c9e41bc5c7b34d6eef326c1efa422b1e88c3890dff2c7da",
     "paper/manuscript_Nature_Communications.bbl": "36f187826243d5e06d48e54e05a96d295ef9ae9b46ae2b90cb0a83504dfce9ce",
-    "paper/manuscript_Nature_Communications.pdf": "2e67f58008b24b5ed0001f5f38ff9522572e7df0713a9d28f99730378fc27d5f",
-    "paper/manuscript_Genome_Biology_Software.tex": "8af9e59ffdee48bec1a22b9a28b772c7ce595735d8ff10ad2c3814242862eb05",
+    "paper/manuscript_Nature_Communications.pdf": "8799a6628daca17915a8a073240778e09a69d9488bc8fad4970bc0710f2e0bef",
+    "paper/manuscript_Genome_Biology_Software.tex": "7f0c7faa915df056ee79302fb92456ab80f625e2e4b414e0865eff4e9dbbff36",
     "paper/manuscript_Genome_Biology_Software.bbl": "1f4a272ad420d970026afae3b7d23ba03dceace8c917a83579966c5fd4faeb7f",
-    "paper/manuscript_Genome_Biology_Software.pdf": "5235b33e975e591702bdd9cfa6e5c0d1865278d751696de22db18f872af49d83"
+    "paper/manuscript_Genome_Biology_Software.pdf": "b9397e15580586b3049a33fb6be26f86dfcfc7d3f7f4f55ad072f4f6654493bd"
   }
 }

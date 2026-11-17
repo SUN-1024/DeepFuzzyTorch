@@ -3784,9 +3784,9 @@ def test_phase1_6_r3_surgical_fixes_and_doc_audit():
     assert abs(aux["conflict"].item() - 0.24) < 1e-14
     assert fused.pi.item() > 0.3
 
-    assert deepfuzzy.__version__ == "0.2.2"
+    assert deepfuzzy.__version__ == "0.2.3"
     project_text = Path(_REPO_ROOT, "pyproject.toml").read_text(encoding="utf-8")
-    assert 'version = "0.2.2"' in project_text
+    assert 'version = "0.2.3"' in project_text
     assert 'requires-python = ">=3.9,<3.14"' in project_text
 
     with Path(_REPO_ROOT, "results", "benchmark_results.json").open(encoding="utf-8") as stream:
@@ -3810,7 +3810,30 @@ def test_phase1_6_r3_surgical_fixes_and_doc_audit():
     assert "Measured CKD" not in run_full_src
     assert "CKD Post-Triage" not in run_full_src
     manifest_text = Path(_REPO_ROOT, "results", "reproducibility_manifest.json").read_text(encoding="utf-8")
-    assert "85-entry SHA-256 inventory" in manifest_text
+    assert "89-entry SHA-256 inventory" in manifest_text
+
+    plugin_path = Path(_REPO_ROOT, "results", "tabpfn_deepfuzzy_plugin_audit.json")
+    plugin_audit = json.loads(plugin_path.read_text(encoding="utf-8"))
+    assert "out_of_fold" not in plugin_audit
+    archive_info = plugin_audit["out_of_fold_archive"]
+    assert archive_info["path"] == "results/tabpfn_plugin_oof_arrays.npz"
+    assert archive_info["n_participants"] == 1137
+    variants = ("UnimodalTabPFN_DeepFuzzyTorch", "DualStream_ModDropTabPFN_DeepFuzzyTorch")
+    for name in variants:
+        assert plugin_audit["models"][name]["padding_invariance"]["max_padding_diff"] == 0.0
+
+    # The restricted archive is optional in public copies; verify it when available locally.
+    archive_path = Path(_REPO_ROOT, archive_info["path"])
+    if archive_path.exists():
+        import hashlib
+
+        assert hashlib.sha256(archive_path.read_bytes()).hexdigest() == archive_info["sha256"]
+        with np.load(archive_path, allow_pickle=False) as archive:
+            expected_keys = {"y", "fold_ids"} | {
+                f"{name}_{field}" for name in variants for field in ("prob", "hesitancy", "conflict")
+            }
+            assert set(archive.files) == expected_keys
+            assert all(archive[key].shape == (1137,) for key in expected_keys)
 
     highlights_path = Path(_REPO_ROOT, "paper", "Highlights_Information_Fusion.md")
     if highlights_path.exists():

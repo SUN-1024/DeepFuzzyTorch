@@ -207,7 +207,7 @@ The `paper/` directory provides **three mutually exclusive single-submission LaT
 ```text
 Fuzzy/
 ├── deepfuzzy/
-│   ├── __init__.py                     # Public API exports (v0.2.2)
+│   ├── __init__.py                     # Public API exports (v0.2.3)
 │   ├── operators.py                    # 5 core differentiable fuzzy/granular operators + UnifiedDeepFuzzyModel
 │   ├── baselines.py                    # Neural/evidential/fuzzy comparators (incl. QMF (adapted), RCML, DrFuse, DDEF, FUML)
 │   ├── missing_benchmark.py            # 2^M - 1 combinatorial & stress-curve missing-modality evaluator
@@ -221,6 +221,7 @@ Fuzzy/
 │   ├── run_full_benchmark.py               # Core multi-track benchmark across ADNI, OASIS-3, TCGA, 6-FM WSI
 │   ├── run_upgrades_and_pathway_audit.py   # Nested N=1,112 ADNI discordance, transductive 1,000-gene TCGA & Reactome audit
 │   ├── run_if_phase1_upgrades.py       # N_comp=854, DDEF/FUML/XGBoost/CatBoost/TabPFN v2, matched-coverage ECDF
+│   ├── run_tabpfn_deepfuzzy_plugin.py     # Nested TabPFN–DeepFuzzy plug-in audit
 │   ├── run_runtime_vram_benchmark.py       # Batch, modality & dimensionality latency/memory profiler
 │   ├── update_r3_gpu_artifacts.py          # Preprocessor replay check, figure regeneration & SHA-256 lock
 │   ├── export_tables_and_manuscript.py     # Markdown benchmark summary & table exporter
@@ -229,6 +230,9 @@ Fuzzy/
 │   └── test_operators_and_theorems.py
 ├── figures/                            # Publication figures (Fig0 - Fig6 in PDF and 300 DPI PNG)
 ├── results/                            # Quantitative JSON/NPZ artifacts, Markdown tables, SHA-256 manifest
+│   ├── TABPFN_DEEPFUZZY_PLUGIN_SUMMARY.md # Aggregate plug-in audit summary
+│   ├── tabpfn_deepfuzzy_plugin_audit.json # Aggregate plug-in audit and archive digest
+│   └── tabpfn_plugin_oof_arrays.npz       # Local, DUA-restricted participant-level outputs
 ├── paper/
 │   ├── THEOREM_PROOFS_COMPLETE.md          # Complete derivations of Definitions 1-2, Theorems 1-5 & Corollary 2.1
 │   ├── Highlights_Information_Fusion.md    # Elsevier plain-text Highlights (<= 85 chars/bullet, zero LaTeX)
@@ -240,3 +244,7 @@ Fuzzy/
 ├── requirements.txt
 └── README.md
 ```
+
+The plug-in OOF archive is local and excluded from Git because ADNI participant-level
+predictions and split IDs are restricted by the ADNI Data Use Agreement. The aggregate
+JSON records its SHA-256 digest for authorized local verification.

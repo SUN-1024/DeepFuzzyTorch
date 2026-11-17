@@ -1,6 +1,6 @@
 {
   "file": "paper/manuscript_Information_Fusion.tex",
-  "line_count": 2942,
+  "line_count": 2955,
   "sentence_word_limit": 95,
   "source_line_char_limit": 95,
   "max_source_line_chars": 95,
@@ -43,7 +43,7 @@
   "overlong_sentences_top10": [],
   "companion_manuscripts": {
     "paper/manuscript_Information_Fusion.tex": {
-      "lines": 2942,
+      "lines": 2955,
       "max_sentence_words": 84,
       "max_sentence_words_incl_math": 119,
       "overlong_gt_95": 0,
@@ -54,7 +54,7 @@
       "bib_keys_cited": 74
     },
     "paper/manuscript_Nature_Communications.tex": {
-      "lines": 2946,
+      "lines": 2959,
       "max_sentence_words": 84,
       "max_sentence_words_incl_math": 119,
       "overlong_gt_95": 0,
@@ -65,7 +65,7 @@
       "bib_keys_cited": 74
     },
     "paper/manuscript_Genome_Biology_Software.tex": {
-      "lines": 2977,
+      "lines": 2990,
       "max_sentence_words": 84,
       "max_sentence_words_incl_math": 119,
       "overlong_gt_95": 0,

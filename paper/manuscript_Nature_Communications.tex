@@ -1181,6 +1181,19 @@ $q_{\text{BH}}\ge0.180$). Several comparators have higher point estimates, inclu
 \texttt{FUML (adapted)} ($0.8363/0.8453$) and \texttt{DDEF (adapted)} ($0.8323/0.8414$),
 without significant differences; pretrained \texttt{TabPFN~v2} alone has a significant AUROC
 advantage ($0.8443/0.8541$, $q_{\text{BH}}=0.040$).
+To test whether this gap reflects encoder pretraining rather than operator limits, a
+backbone-agnostic plug-in audit pairing nested \texttt{TabPFN~v2} encoders with
+\texttt{DeepFuzzyTorch} (\texttt{results/\allowbreak TABPFN\_\allowbreak DEEPFUZZY\_\allowbreak
+PLUGIN\_\allowbreak SUMMARY.md}) raises full-cohort AUROC from $0.8270$ to $0.8321$
+(unimodal plug-in, paired bootstrap $p=0.010$) and $0.8349$ (modality-dropout dual-stream
+plug-in, $p=0.024$; $\text{ECE}=0.0364$). Both plug-ins preserve exact $0.00$ padding
+invariance ($900$ checks each), $2.38\times 10^{-7}$ Fold~0 rule reconstruction, and conflict
+detection ($C_{\mathcal{O}}$ AUROC $0.6946$), while lifting 15-subset macro AUROC to
+$0.7803\text{--}0.7828$ (eligible $0.7841\text{--}0.7868$; \texttt{FDG}-only $0.6743$ vs.\
+single-table \texttt{TabPFN~v2} $0.5510$; 20\% conflict referral $0.8394\text{--}0.8408$).
+Native single-table \texttt{TabPFN~v2} retains a higher full-cohort point estimate ($0.8443$,
+unadjusted $p=0.022\text{--}0.037$) by concentrating in-context capacity on joint feature
+co-occurrence rather than decoupled subset invariance and conflict auditability.
 
 Theorem~\ref{thm:degeneration} and Corollary~\ref{cor:e2e_vacuity} eliminate arbitrary
 fill-value bias on already-unacquired slots, with $0.00$ fixed-width padding sensitivity.
@@ -2179,7 +2192,7 @@ digests (\texttt{results/\allowbreak reproducibility\_\allowbreak manifest.json}
 in the public reproducibility repository.
 
 \section*{Code Availability}
-The complete \texttt{DeepFuzzyTorch} (\texttt{v0.2.2}) PyTorch operator library, all baseline
+The complete \texttt{DeepFuzzyTorch} (\texttt{v0.2.3}) PyTorch operator library, all baseline
 implementations (including \texttt{QMF (adapted)}, \texttt{DDEF (adapted)}, \texttt{FUML
 (adapted)}, \texttt{RCML (adapted)}/\texttt{DrFuse (adapted)}, \texttt{XGBoost},
 \texttt{CatBoost}, and \texttt{TabPFN~v2}), automated multi-track benchmark and runtime

@@ -66,7 +66,7 @@ def _write_manifest_lock(
     cohort_accounting: dict,
     relock_only: bool = False,
 ) -> dict:
-    """Write the 85-entry SHA-256 reproducibility manifest covering data, code, and artifacts."""
+    """Write the 89-entry SHA-256 reproducibility manifest covering data, code, and artifacts."""
     data_files_rel = [
         "data_benchmark/adni_processed/cohort1_adni_ptau181_313roi.csv",
         "data_benchmark/adni_processed/cohort2_adni_ptau217_gfap.csv",
@@ -98,6 +98,7 @@ def _write_manifest_lock(
         "benchmarks/run_full_benchmark.py",
         "benchmarks/run_upgrades_and_pathway_audit.py",
         "benchmarks/run_if_phase1_upgrades.py",
+        "benchmarks/run_tabpfn_deepfuzzy_plugin.py",
         "benchmarks/run_runtime_vram_benchmark.py",
         "benchmarks/update_r3_gpu_artifacts.py",
         "benchmarks/export_tables_and_manuscript.py",
@@ -111,6 +112,9 @@ def _write_manifest_lock(
     artifact_files_rel = [
         "results/benchmark_results.json",
         "results/oof_predictions_and_splits.npz",
+        "results/tabpfn_deepfuzzy_plugin_audit.json",
+        "results/TABPFN_DEEPFUZZY_PLUGIN_SUMMARY.md",
+        "results/tabpfn_plugin_oof_arrays.npz",
         "results/tcga_top20_reactome_enrichment.json",
         "results/tcga_top20_reactome_pathways.csv",
         "results/runtime_vram_benchmark.json",
@@ -178,7 +182,7 @@ def _write_manifest_lock(
             },
             "stage5_sha256_reproducibility_lock": {
                 "script": "benchmarks/update_r3_gpu_artifacts.py",
-                "description": "Fold preprocessor replay verification, Fold 0 checkpoint archive, publication figures, compiled manuscripts, and 85-entry SHA-256 inventory.",
+                "description": "Fold preprocessor replay verification, Fold 0 checkpoint archive, publication figures, compiled manuscripts, and 89-entry SHA-256 inventory.",
             },
         },
         "environment_lock": {
@@ -233,7 +237,7 @@ def main() -> None:
     parser.add_argument(
         "--relock-only",
         action="store_true",
-        help="Relock the 85-entry SHA-256 reproducibility_manifest.json without replaying models, figures, or markdown",
+        help="Relock the 89-entry SHA-256 reproducibility_manifest.json without replaying models, figures, or markdown",
     )
     args = parser.parse_args()
 
