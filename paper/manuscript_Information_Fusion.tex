@@ -319,8 +319,9 @@ mathematical guarantees. Section~\ref{sec:experiments} details the multi-center 
 baseline suite, and statistical protocols. Section~\ref{sec:results} reports empirical and
 computational scaling results across all benchmarks. Section~\ref{sec:discussion} discusses
 architectural trade-offs and limitations, Section~\ref{sec:conclusion} concludes the study,
-Appendix~\ref{app:proofs} provides complete proofs, and Appendix~\ref{app:provenance} documents
-cohort provenance and implementation specifications.
+Appendix~\ref{app:proofs} provides complete proofs, Appendix~\ref{app:provenance} documents
+cohort provenance and implementation specifications, and Appendix~\ref{app:extended_audits}
+reports supplementary fidelity, exposure, adaptation, and inductive omics audits.
 
 \section{Related Work}
 \label{sec:related}
@@ -2537,6 +2538,18 @@ Native single-table \texttt{TabPFN~v2} retains a higher full-cohort point estima
 unadjusted $p=0.022\text{--}0.037$) by concentrating in-context capacity on joint feature
 co-occurrence rather than decoupled subset invariance and conflict auditability.
 
+The supplementary fidelity and exposure audit (Table~\ref{tab:supp_adni_fidelity_exposure})
+replays the dual-stream AUROC exactly ($0.8349$). Batch-composition changes induce a maximum
+probability shift of $0.3770$ for \texttt{MUSE\_BatchGraph}, versus $1.19\times10^{-7}$ for
+\texttt{DeepFuzzyTorch}. Symmetric modality-dropout exposure raises \texttt{XGBoost}'s
+15-subset macro AUROC from $0.7056$ to $0.7705$, narrowing the gap to $0.7764$, but lowers
+\texttt{TabPFN}'s full-cohort AUROC from $0.8443$ to $0.8192$ ($q_{\mathrm{BH}}=0.0023$
+versus unaugmented \texttt{TabPFN}). Same-visit results are also reported in the table. On
+$n=198$ discordant cases, inner-three-fold out-of-fold ECDF referral gives $0.1634$ AURC and
+rank correlation $0.9443$ with outer calibration, versus $0.2015$ for pure $C_{\mathcal O}$
+referral (paired $p=0.042$, $q_{\mathrm{BH}}=0.1575$); \texttt{TabPFN} achieves $0.1208$
+(paired $p=0.010$, $q_{\mathrm{BH}}=0.0750$).
+
 Theorem~\ref{thm:degeneration} and Corollary~\ref{cor:e2e_vacuity} eliminate arbitrary
 fill-value bias on already-unacquired slots, with $0.00$ fixed-width padding sensitivity.
 Separately, the higher empirical incomplete-subset retention observed on ADNI
@@ -2576,6 +2589,14 @@ $\bm{z}\in\mathbb{R}^C$. Similarly, in 6-FM pathology consensus, while
 \texttt{BestSingleFM} or \texttt{MeanPool} suffice on clean shifts, \texttt{HesitantFuzzy + PFS
 TTA} prevents single-FM corruption collapse (\textbf{0.9925} on Camelyon17 and \textbf{0.9804}
 on NCT-CRC vs.\ \texttt{Logit-Tent (adapted)} $0.9893$ and $0.9561$).
+Across inversion and dual-expert noise, the extended TTA audit
+(Table~\ref{tab:supp_pathology_tta_ablation}) also compares SAR and EATA
+\cite{niu2022eata,niu2023sar}: PFS-TTA has higher AUROC than these and Tent
+($q_{\mathrm{BH}}\le0.0181$). On NCT-CRC single-expert inversion, removing discordance
+regularization or source anchoring reduces AUROC from $0.9797$ to $0.9748$ or $0.9725$
+(each $q_{\mathrm{BH}}=0.0015$). Linear intuitionistic $q_P=1$ matches quadratic $q_P=2$
+($0.9915/0.9799$ versus $0.9914/0.9797$), so these results do not isolate an advantage of
+the quadratic geometry.
 
 \noindent\textbf{Limitations and scope.}
 Several boundaries merit explicit disclosure. First, dense linear \texttt{PCA-20} reaches
@@ -2586,24 +2607,33 @@ transductive pass over the combined TCGA cohorts, the selected 20-gene panel ref
 tumor-intrinsic regulators and lung-lineage markers (\texttt{SFTPA2}, \texttt{SFTPD}). A
 sensitivity check using in-fold $1,000$-MAD rescreening inside the pooled
 transductive unsupervised $5,000$-gene MAD cache ($5,000 \to 1,000 \to 20$) yields $0.9685$
-overlap and $0.7389$ AUROC. Isolating strictly organ-agnostic transcriptomic panels will
-require
-explicit cohort-stratified residualization or leave-cancer-type-out cross-validation in future
-work. Second, under gentle sparsity regularization ($\lambda_{\text{sp}}=0.02$),
+overlap and $0.7389$ AUROC. In the strictly inductive $18,495\to1,000\to20$ audit
+(Table~\ref{tab:supp_tcga_inductive_nonlung}), pooled B1a still selects \texttt{SFTPA2} and
+\texttt{SFTPD}; B1b excludes lung cohorts and B1c uses within-cohort training
+Z-residualization, removing these markers from the consensus panel without establishing
+organ-agnostic biology. B1c retains $0.7413/0.7419$ 4-modality AUROC for fuzzy-rough/OWA,
+while pooled PCA-20 reaches $0.7450$ versus $0.7389$ ($q_{\mathrm{BH}}=0.0093$) and non-lung
+Lasso-20 reaches $0.7483$ versus $0.7361$ ($q_{\mathrm{BH}}=0.0480$). OWA improves pooled
+selection Jaccard from $0.3830$ to $0.5075$ but its fit is costlier. Leave-cancer-type-out
+validation remains necessary. Second, under gentle sparsity regularization
+($\lambda_{\text{sp}}=0.02$),
 \texttt{DeepConceptTSKHead} learns smooth differential concept gates ($g_{r,c} \in [0.689,
 0.766]$) rather than hard-zero rule pruning; applications requiring ultra-compact 2--3 variable
 rules can apply post-hoc gate thresholding or stronger $L_1$ penalties. Third, the ADNI
 Cohort~2 Baseline Low eGFR subgroup ($<60\text{ mL/min/1.73m}^2$, single baseline
 measurement; $n=22$, including $n=6$ A$\beta^-$ low-eGFR subjects) carries wide
 Clopper--Pearson confidence intervals and is strictly exploratory. Outer-training in-sample
-ECDF calibration avoids held-out label leakage, but prospective threshold selection should use
-inner-fold out-of-fold calibration. Neural/fuzzy joint architectures use training-time
-modality dropout ($p_{\text{drop}}=0.20$), whereas GBDT and \texttt{TabPFN~v2} train on natural
-baseline missingness patterns. In Cohort~1, $211/213$ follow-up amyloid references occur in
+ECDF calibration avoids held-out label leakage; the supplementary inner-fold ranking addresses
+in-sample calibration but still needs prospective threshold validation. Main-table GBDT and
+\texttt{TabPFN~v2} use natural missingness, whereas supplementary modality-dropout controls
+test symmetric exposure. In Cohort~1, $211/213$ follow-up amyloid references occur in
 incomplete baseline records. Finally, survival endpoints
 use maturity-weighted binary targets rather than Cox partial likelihoods, and Track~5 evaluates
 full-batch transductive TTA at the patch/tile level because upstream feature caches omit
-slide-level patient identifiers.
+slide-level patient identifiers. Under Camelyon17 scalar-temperature perturbation,
+\texttt{Tent}/\texttt{EATA} attain $0.9907$ AUROC versus $0.9857$ for PFS-TTA, which has
+lower ECE ($0.0291$ versus $0.0401/0.0349$); this regime includes an expert-specific logit
+offset and does not imply universal calibration dominance.
 
 \section{Conclusion}
 \label{sec:conclusion}
@@ -2636,14 +2666,17 @@ NCT-CRC-HE-100K); participant-level ADNI and OASIS-3 files are governed by third
 Agreements and cannot be redistributed directly. Local benchmark scripts consume harmonized
 credentialed CSV exports and pre-extracted feature caches rather than bundling raw LONI
 neuroimaging or raw WSI ingestion pipelines. The complete \texttt{DeepFuzzyTorch}
-(\texttt{v0.2.3}) Python package, unit tests
+(\texttt{v0.2.4}) Python package, unit tests
 verifying
 Theorems~1--5 and Corollary~2.1, benchmark scripts, aggregate evaluation archives
 (\texttt{results/\allowbreak benchmark\_\allowbreak results.json} and
 \texttt{results/\allowbreak tcga\_\allowbreak top20\_\allowbreak reactome\_\allowbreak
 enrichment.json}), and SHA-256 reproducibility manifest
 (\texttt{results/\allowbreak reproducibility\_\allowbreak manifest.json}) are openly available
-at \url{https://github.com/SUN-1024/DeepFuzzyTorch}.
+at \url{https://github.com/SUN-1024/DeepFuzzyTorch}. The supplementary aggregate audits are
+stored as \texttt{results/v024\_*.json}; \texttt{results/\allowbreak
+v024\_adni\_oof\_arrays.npz}
+contains participant-level outputs and remains restricted under the ADNI Data Use Agreement.
 
 \appendix
 \section{Mathematical Proofs of Theorems 1--5 and Corollary 2.1}
@@ -2945,6 +2978,184 @@ entries agree to $0.00$, the remaining $8$ baseline or ablation AURCs differ by 
 $1.92\times 10^{-5}$, and all $39/39$ entries are identical when rounded to four decimal
 places.
 \end{remark}
+
+\section{Extended Comparator Fidelity, Exposure Symmetry, TTA, and Inductive Omics Audits}
+\label{app:extended_audits}
+These aggregate audits extend the frozen main-table evaluations. In the referral audit,
+inner-fold calibration is fitted within the outer-training partition; AURC is lower when
+referral
+ranking is better. Pathology adaptation is transductive at patch/tile level. In TCGA, all
+feature screening and selection are performed within training folds.
+
+\begin{table*}[t]
+\centering
+\caption{\textbf{ADNI comparator fidelity, exposure, and inner-fold referral.} Full and
+same-visit AUROCs refer to Cohort~1 ($N=1,137$ and $n=924$); the two subset columns are
+15-subset macro AUROCs on the full and same-visit cohorts. Cohort~2 has $n=289$; referral
+AURC uses $n=198$ deduplicated discordant cases. Brackets are bootstrap 95\% confidence
+intervals. Faithful and ModDrop denote the supplementary comparator implementations and
+symmetric training exposure, respectively.}
+\label{tab:supp_adni_fidelity_exposure}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Model & Cohort~1 [95\%
+CI] & Same visit & Subsets: full & Subsets: visit & Cohort~2 & Inner AURC \\
+\midrule
+\texttt{DeepFuzzyTorch} & 0.8270 [0.8005--0.8486] & 0.8387 & 0.7764 & 0.7921 & 0.8740 & 0.1634
+\\
+\texttt{FUML} & 0.8363 [0.8121--0.8584] & 0.8477 & 0.7790 & 0.7944 & 0.8608 & 0.1973 \\
+\texttt{QMF} & 0.8313 [0.8071--0.8540] & 0.8449 & 0.7759 & 0.7911 & 0.8414 & 0.1691 \\
+\texttt{DrFuse} & 0.8316 [0.8062--0.8528] & 0.8411 & 0.7690 & 0.7819 & 0.8598 & 0.1725 \\
+\texttt{DDEF} & 0.8323 [0.8069--0.8537] & 0.8435 & 0.7740 & 0.7884 & 0.8595 & 0.1589 \\
+\texttt{XGBoost} & 0.8263 [0.8009--0.8487] & 0.8351 & 0.7056 & 0.7206 & 0.8749 & 0.1584 \\
+\texttt{CatBoost} & 0.8262 [0.8009--0.8493] & 0.8375 & 0.7405 & 0.7557 & 0.8741 & 0.1497 \\
+\texttt{TabPFN} & 0.8443 [0.8196--0.8664] & 0.8569 & 0.7635 & 0.7794 & 0.8830 & 0.1208 \\
+\texttt{FUML\_Faithful} & 0.8044 [0.7782--0.8286] & 0.8200 & 0.7116 & 0.7317 & 0.8384 & 0.2069
+\\
+\texttt{RFUML\_Faithful} & 0.7973 [0.7711--0.8229] & 0.8142 & 0.7094 & 0.7306 & 0.8307 & 0.2327
+\\
+\texttt{QMF\_Faithful} & 0.8294 [0.8054--0.8517] & 0.8428 & 0.7757 & 0.7905 & 0.8408 & 0.1780
+\\
+\texttt{MUSE\_BatchGraph} & 0.8345 [0.8095--0.8567] & 0.8481 & 0.7752 & 0.7913 & 0.8623 &
+0.3262 \\
+\texttt{XGBoost\_ModDrop} & 0.8260 [0.8002--0.8482] & 0.8359 & 0.7705 & 0.7842 & 0.8645 &
+0.1775 \\
+\texttt{CatBoost\_ModDrop} & 0.8234 [0.7967--0.8469] & 0.8301 & 0.7612 & 0.7720 & 0.8703 &
+0.1767 \\
+\texttt{TabPFN\_ModDrop} & 0.8192 [0.7934--0.8423] & 0.8250 & 0.7663 & 0.7779 & 0.8529 & 0.1950
+\\
+\bottomrule
+\end{tabular}}
+\end{table*}
+
+\begin{table*}[t]
+\centering
+\caption{\textbf{Pathology adaptation and component ablations.} Cells give AUROC / ECE;
+smaller ECE is better. Single-expert inversion and dead-expert entries are macro averages
+across the six perturbed experts. A dash denotes an ablation not evaluated in that regime.
+The scalar-temperature perturbation also includes an expert-specific logit offset. For the
+inversion and dual-expert-noise regimes, paired AUROC comparisons with PFS-TTA across Tent,
+SAR, and EATA have $q_{\mathrm{BH}}\le0.0181$ within each dataset and regime.}
+\label{tab:supp_pathology_tta_ablation}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llcccc}
+\toprule
+Shift & Dataset & PFS-TTA & Tent & SAR & EATA \\
+\midrule
+PLIP inversion & Camelyon17 & 0.9925 / 0.0282 & 0.9893 / 0.1528 & 0.9894 / 0.1559 & 0.9860 /
+0.1533 \\
+PLIP inversion & NCT-CRC & 0.9804 / 0.0604 & 0.9561 / 0.1016 & 0.9566 / 0.1087 & 0.9554 /
+0.0987 \\
+Single-expert inversion & Camelyon17 & 0.9914 / 0.0231 & 0.9883 / 0.1584 & 0.9884 / 0.1602 &
+0.9875 / 0.1559 \\
+Single-expert inversion & NCT-CRC & 0.9797 / 0.0594 & 0.9396 / 0.1113 & 0.9417 / 0.1142 &
+0.9363 / 0.1129 \\
+Dual-expert noise & Camelyon17 & 0.9912 / 0.0271 & 0.9884 / 0.0542 & 0.9884 / 0.0570 & 0.9879 /
+0.0490 \\
+Dual-expert noise & NCT-CRC & 0.9807 / 0.0591 & 0.9694 / 0.0460 & 0.9705 / 0.0461 & 0.9694 /
+0.0456 \\
+Clean OOD & Camelyon17 & 0.9919 / 0.0212 & 0.9914 / 0.0202 & 0.9914 / 0.0206 & 0.9911 / 0.0237
+\\
+Clean OOD & NCT-CRC & 0.9815 / 0.0569 & 0.9823 / 0.0407 & 0.9825 / 0.0386 & 0.9824 / 0.0435 \\
+Temperature & Camelyon17 & 0.9857 / 0.0291 & 0.9907 / 0.0401 & 0.9903 / 0.0498 & 0.9907 /
+0.0349 \\
+Temperature & NCT-CRC & 0.9811 / 0.0510 & 0.9779 / 0.0445 & 0.9782 / 0.0431 & 0.9776 / 0.0447
+\\
+Dead expert & Camelyon17 & 0.9916 / 0.0204 & 0.9908 / 0.0912 & 0.9909 / 0.0926 & 0.9908 /
+0.0927 \\
+Dead expert & NCT-CRC & 0.9809 / 0.0629 & 0.9815 / 0.0635 & 0.9817 / 0.0622 & 0.9814 / 0.0648
+\\
+\bottomrule
+\end{tabular}}
+\par\medskip
+\resizebox{0.85\textwidth}{!}{%
+\begin{tabular}{llccc}
+\toprule
+Shift & Dataset & Linear IFS & No discordance & No anchor \\
+\midrule
+PLIP inversion & Camelyon17 & 0.9925 / 0.0279 & 0.9923 / 0.0289 & 0.9919 / 0.0341 \\
+PLIP inversion & NCT-CRC & 0.9804 / 0.0598 & 0.9780 / 0.0563 & 0.9747 / 0.0729 \\
+Single-expert inversion & Camelyon17 & 0.9915 / 0.0220 & 0.9907 / 0.0250 & 0.9909 / 0.0280 \\
+Single-expert inversion & NCT-CRC & 0.9799 / 0.0591 & 0.9748 / 0.0553 & 0.9725 / 0.0728 \\
+Dual-expert noise & Camelyon17 & 0.9912 / 0.0270 & 0.9905 / 0.0287 & 0.9906 / 0.0329 \\
+Dual-expert noise & NCT-CRC & 0.9807 / 0.0588 & 0.9800 / 0.0576 & 0.9787 / 0.0686 \\
+Clean OOD & Camelyon17 & 0.9919 / 0.0211 & 0.9918 / 0.0206 & 0.9918 / 0.0313 \\
+Clean OOD & NCT-CRC & 0.9815 / 0.0566 & 0.9814 / 0.0568 & 0.9806 / 0.0691 \\
+Temperature & Camelyon17 & 0.9857 / 0.0292 & 0.9857 / 0.0321 & 0.9833 / 0.0395 \\
+Temperature & NCT-CRC & 0.9811 / 0.0508 & 0.9809 / 0.0489 & 0.9787 / 0.0639 \\
+Dead expert & Camelyon17 & -- & -- & -- \\
+Dead expert & NCT-CRC & -- & -- & -- \\
+\bottomrule
+\end{tabular}}
+\end{table*}
+
+\begin{table*}[t]
+\centering
+\caption{\textbf{Strictly inductive TCGA selection and survival audits.} B1a pools seven
+cohorts ($N=2,946$), B1b excludes the two lung cohorts ($n=2,065$), and B1c uses
+within-cohort training Z-residualization before MAD screening ($N=2,946$). Brackets are
+bootstrap 95\% confidence intervals; Jaccard is mean pairwise fold stability, and time is
+selector fit seconds per fold. CoxPH uses survival-model risk for AUROC; its RNA-only result,
+panel stability, and selector
+time describe the shared fuzzy-rough panel. PCA components do not have a gene-set Jaccard.}
+\label{tab:supp_tcga_inductive_nonlung}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llccccccc}
+\toprule
+Audit & Selector / model & AUROC [95\%
+CI] & Macro & OS C-index & Within C-index & RNA only & Jaccard & Seconds / fold \\
+\midrule
+B1a & \texttt{FuzzyRough-20} & 0.7389 [0.7196--0.7564] & 0.6945 & 0.7520 & 0.7247 & 0.6401 &
+0.3830 & 41.4797 \\
+B1a & \texttt{OWA-FuzzyRough-20} & 0.7412 [0.7218--0.7587] & 0.6978 & 0.7549 & 0.7281 & 0.6487
+& 0.5075 & 258.7447 \\
+B1a & \texttt{mRMR-20} & 0.7392 [0.7203--0.7573] & 0.6955 & 0.7532 & 0.7271 & 0.6487 & 0.4132 &
+0.0106 \\
+B1a & \texttt{Lasso-20} & 0.7400 [0.7198--0.7577] & 0.6965 & 0.7498 & 0.7204 & 0.6390 & 0.1889
+& 2.0883 \\
+B1a & \texttt{MI-20} & 0.7409 [0.7222--0.7586] & 0.6962 & 0.7510 & 0.7192 & 0.6315 & 0.1093 &
+2.0882 \\
+B1a & \texttt{PCA-20} & 0.7450 [0.7253--0.7622] & 0.7031 & 0.7565 & 0.7294 & 0.6629 & -- &
+0.0107 \\
+B1a & \texttt{All-1000} & 0.6869 [0.6676--0.7056] & 0.6440 & 0.6900 & 0.6664 & 0.6317 & 0.9499
+& 0.0000 \\
+B1a & \texttt{CoxPH\_Inductive20} & 0.6839 [0.6646--0.7032] & 0.6383 & 0.7076 & 0.6770 & 0.6401
+& 0.3830 & 41.4797 \\
+B1b & \texttt{FuzzyRough-20} & 0.7361 [0.7128--0.7593] & 0.7154 & 0.7622 & 0.7542 & 0.6142 &
+0.3283 & 21.5129 \\
+B1b & \texttt{OWA-FuzzyRough-20} & 0.7365 [0.7129--0.7600] & 0.7159 & 0.7628 & 0.7546 & 0.6171
+& 0.3687 & 141.6695 \\
+B1b & \texttt{mRMR-20} & 0.7387 [0.7158--0.7622] & 0.7190 & 0.7653 & 0.7553 & 0.6370 & 0.5958 &
+0.0038 \\
+B1b & \texttt{Lasso-20} & 0.7483 [0.7256--0.7705] & 0.7288 & 0.7650 & 0.7551 & 0.6416 & 0.2578
+& 1.6101 \\
+B1b & \texttt{MI-20} & 0.7366 [0.7141--0.7610] & 0.7171 & 0.7608 & 0.7507 & 0.6009 & 0.0508 &
+1.4609 \\
+B1b & \texttt{All-1000} & 0.6993 [0.6741--0.7233] & 0.6836 & 0.7217 & 0.7141 & 0.6335 & 0.9516
+& 0.0000 \\
+B1b & \texttt{CoxPH\_Inductive20} & 0.6892 [0.6654--0.7145] & 0.6739 & 0.7304 & 0.7192 & 0.6142
+& 0.3283 & 21.5129 \\
+B1c & \texttt{FuzzyRough-20} & 0.7413 [0.7219--0.7588] & 0.6968 & 0.7533 & 0.7230 & 0.5949 &
+0.1895 & 42.6979 \\
+B1c & \texttt{OWA-FuzzyRough-20} & 0.7419 [0.7236--0.7598] & 0.6962 & 0.7518 & 0.7222 & 0.5791
+& 0.1586 & 264.7961 \\
+B1c & \texttt{mRMR-20} & 0.7431 [0.7233--0.7611] & 0.6985 & 0.7562 & 0.7286 & 0.6012 & 0.2709 &
+0.0110 \\
+B1c & \texttt{Lasso-20} & 0.7408 [0.7205--0.7585] & 0.6960 & 0.7473 & 0.7134 & 0.5576 & 0.1341
+& 3.0845 \\
+B1c & \texttt{All-1000} & 0.6761 [0.6561--0.6959] & 0.6371 & 0.6812 & 0.6599 & 0.5783 & 0.6767
+& 0.0000 \\
+B1c & \texttt{CoxPH\_Inductive20} & 0.6952 [0.6752--0.7131] & 0.6653 & 0.7310 & 0.7036 & 0.5949
+& 0.1895 & 42.6979 \\
+\bottomrule
+\end{tabular}}
+\end{table*}
+
+\FloatBarrier
 
 {\raggedright
 \small

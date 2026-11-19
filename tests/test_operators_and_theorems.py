@@ -3784,9 +3784,9 @@ def test_phase1_6_r3_surgical_fixes_and_doc_audit():
     assert abs(aux["conflict"].item() - 0.24) < 1e-14
     assert fused.pi.item() > 0.3
 
-    assert deepfuzzy.__version__ == "0.2.3"
+    assert deepfuzzy.__version__ == "0.2.4"
     project_text = Path(_REPO_ROOT, "pyproject.toml").read_text(encoding="utf-8")
-    assert 'version = "0.2.3"' in project_text
+    assert 'version = "0.2.4"' in project_text
     assert 'requires-python = ">=3.9,<3.14"' in project_text
 
     with Path(_REPO_ROOT, "results", "benchmark_results.json").open(encoding="utf-8") as stream:
@@ -3810,7 +3810,26 @@ def test_phase1_6_r3_surgical_fixes_and_doc_audit():
     assert "Measured CKD" not in run_full_src
     assert "CKD Post-Triage" not in run_full_src
     manifest_text = Path(_REPO_ROOT, "results", "reproducibility_manifest.json").read_text(encoding="utf-8")
-    assert "89-entry SHA-256 inventory" in manifest_text
+    manifest_obj = json.loads(manifest_text)
+    n_manifest = (
+        len(manifest_obj["data_sha256"])
+        + len(manifest_obj["code_sha256"])
+        + len(manifest_obj["artifact_sha256"])
+    )
+    assert f"{n_manifest}-entry SHA-256 inventory" in manifest_text
+
+    v024_adni_path = Path(_REPO_ROOT, "results", "v024_adni_fusion_exposure_ecdf_audit.json")
+    if v024_adni_path.exists():
+        import hashlib
+        import stat
+
+        v024_adni = json.loads(v024_adni_path.read_text(encoding="utf-8"))
+        oof_meta = v024_adni["out_of_fold_archive"]
+        assert oof_meta["path"] == "results/v024_adni_oof_arrays.npz"
+        oof_path = Path(_REPO_ROOT, oof_meta["path"])
+        if oof_path.exists():
+            assert hashlib.sha256(oof_path.read_bytes()).hexdigest() == oof_meta["sha256"]
+            assert (stat.S_IMODE(oof_path.stat().st_mode) & 0o077) == 0
 
     plugin_path = Path(_REPO_ROOT, "results", "tabpfn_deepfuzzy_plugin_audit.json")
     plugin_audit = json.loads(plugin_path.read_text(encoding="utf-8"))
@@ -4647,6 +4666,131 @@ def test_phase1_ddef_and_fuml_baselines():
             for p in model.parameters()
             if p.requires_grad
         )
+
+
+def test_v024_version_and_table_parity_from_repo_root():
+    import subprocess
+    from pathlib import Path
+    import deepfuzzy
+
+    root = Path(_REPO_ROOT)
+    assert deepfuzzy.__version__ == "0.2.4"
+    result = subprocess.run(
+        [sys.executable, "benchmarks/verify_v024_table_parity.py"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Main tables verified" in result.stdout
+    assert "v0.2.4 parity: 0 failures" in result.stdout
+
+
+def test_v024_supplementary_parity_rejects_changed_or_missing_cells():
+    import runpy
+    from pathlib import Path
+
+    root = Path(_REPO_ROOT)
+    verifier = runpy.run_path(str(root / "benchmarks/verify_v024_table_parity.py"))
+    source = (root / "paper/manuscript_Information_Fusion.tex").read_text(encoding="utf-8")
+    ledgers = [json.loads((root / "results" / name).read_text(encoding="utf-8")) for name in (
+        "v024_adni_fusion_exposure_ecdf_audit.json",
+        "v024_pathology_tta_ablation_audit.json",
+        "v024_tcga_inductive_nonlung_owa_audit.json",
+    )]
+    check = verifier["verify_supplementary_tables"]
+    counts = check(source, *ledgers)
+    assert len(counts) == 3 and all(values > 0 for _, values in counts.values())
+    head, appendix = source.split(r"\label{app:extended_audits}", 1)
+    mutations = (
+        ("0.8270 [0.8005--0.8486]", "0.8271 [0.8005--0.8486]"),
+        ("0.9925 / 0.0282", "0.9930 / 0.0282"),
+        ("0.7389 [0.7196--0.7564]", "0.7394 [0.7196--0.7564]"),
+        (r"\texttt{FUML\_Faithful}", r"\texttt{FUML\_Changed}"),
+    )
+    for old, new in mutations:
+        assert old in appendix
+        altered = head + r"\label{app:extended_audits}" + appendix.replace(old, new, 1)
+        try:
+            check(altered, *ledgers)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"Verifier accepted changed table cell or row: {old}")
+    bench = json.loads((root / "results/benchmark_results.json").read_text(encoding="utf-8"))
+    runtime = json.loads((root / "results/runtime_vram_benchmark.json").read_text(encoding="utf-8"))
+    check_main = verifier["verify_main_tables"]
+    altered_main = source.replace("EarlyConcat-MLP (\\textit{TPAMI'19})", "WrongModel-MLP (\\textit{TPAMI'19})", 1)
+    assert altered_main != source
+    try:
+        check_main(altered_main, bench, runtime)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Verifier accepted a renamed row in adni_main")
+    removed = next(line for line in appendix.splitlines(keepends=True)
+                   if r"\texttt{FUML\_Faithful}" in line)
+    try:
+        check(head + r"\label{app:extended_audits}" + appendix.replace(removed, "", 1), *ledgers)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Verifier accepted a missing supplementary table row")
+
+
+def test_v024_scripts_parse_as_python_310_without_library_assertions():
+    import ast
+    from pathlib import Path
+
+    root = Path(_REPO_ROOT)
+    scripts = sorted((root / "benchmarks").glob("*v024*.py"))
+    assert len(scripts) == 4
+    for script in scripts:
+        ast.parse(script.read_text(encoding="utf-8"), filename=script.name, feature_version=(3, 10))
+    for directory in ("benchmarks", "deepfuzzy"):
+        for script in (root / directory).rglob("*.py"):
+            tree = ast.parse(script.read_text(encoding="utf-8"), feature_version=(3, 10))
+            assert not any(isinstance(node, ast.Assert) for node in ast.walk(tree)), script
+
+
+def test_v024_companion_builders_preserve_wrapped_audit_tables(tmp_path):
+    import re
+    import runpy
+    import subprocess
+    from pathlib import Path
+
+    root = Path(_REPO_ROOT)
+    source = tmp_path / "source.tex"
+    source.write_text((root / "paper/manuscript_Information_Fusion.tex").read_text(encoding="utf-8"),
+                      encoding="utf-8")
+    result = subprocess.run(
+        [sys.executable, str(root / "benchmarks/build_companion_manuscripts.py"),
+         "--source", str(source), "--out-dir", str(tmp_path), "--wrap-source"],
+        cwd=root, capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Main floats: 10/10" in result.stdout
+    verifier = runpy.run_path(str(root / "benchmarks/verify_v024_table_parity.py"))
+    ledgers = [json.loads((root / "results" / name).read_text(encoding="utf-8")) for name in (
+        "v024_adni_fusion_exposure_ecdf_audit.json",
+        "v024_pathology_tta_ablation_audit.json",
+        "v024_tcga_inductive_nonlung_owa_audit.json",
+    )]
+    labels = ["tab:supp_adni_fidelity_exposure", "tab:supp_pathology_tta_ablation",
+              "tab:supp_tcga_inductive_nonlung"]
+    for name in ("source.tex", "manuscript_Genome_Biology_Software.tex",
+                 "manuscript_Nature_Communications.tex"):
+        content = (tmp_path / name).read_text(encoding="utf-8")
+        assert content.count(r"\label{app:extended_audits}") == 1
+        verifier["verify_supplementary_tables"](content, *ledgers)
+    nature = (tmp_path / "manuscript_Nature_Communications.tex").read_text(encoding="utf-8")
+    main, supplement = nature.split(r"\appendix", 1)
+    for label in labels:
+        assert re.search(r"Supplementary\s+Table~\\ref\{" + re.escape(label) + r"\}", main)
+    table_labels = re.findall(r"\\label\{(tab:[^}]+)\}", "\n".join(
+        re.findall(r"\\begin\{table\*?\}.*?\\end\{table\*?\}", supplement, re.S)))
+    assert table_labels[6:] == labels
 
 
 if __name__ == "__main__":

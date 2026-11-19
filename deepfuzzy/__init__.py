@@ -74,7 +74,7 @@ from .missing_benchmark import CombinatorialMissingModalityBenchmark
 from .conflict_injector import CrossModalityConflictInjector
 from .rough_reducer import FuzzyRoughFeatureReducer
 
-__version__ = "0.2.3"
+__version__ = "0.2.4"
 __all__ = [
     "IntuitionisticFuzzyTensor",
     "IntuitionisticFuzzyEncoder",

@@ -1,9 +1,9 @@
 {
   "execution_command": "PYTHONPATH=. python benchmarks/update_r3_gpu_artifacts.py --relock-only",
-  "execution_timestamp_utc": "2026-11-17T05:36:15.655888+00:00",
+  "execution_timestamp_utc": "2026-11-19T05:41:46.133785+00:00",
   "execution_device": "cpu",
   "gpu_name": "CPU",
-  "elapsed_seconds": 0.01,
+  "elapsed_seconds": 0.21,
   "provenance_stages": {
     "stage1_transductive_tcga_and_reactome_fetch": {
       "script": "benchmarks/fetch_tcga_1000genes_cbioportal.py",
@@ -23,7 +23,16 @@
     },
     "stage5_sha256_reproducibility_lock": {
       "script": "benchmarks/update_r3_gpu_artifacts.py",
-      "description": "Fold preprocessor replay verification, Fold 0 checkpoint archive, publication figures, compiled manuscripts, and 89-entry SHA-256 inventory."
+      "description": "Fold preprocessor replay verification, Fold 0 checkpoint archive, publication figures, compiled manuscripts, and 99-entry SHA-256 inventory."
+    },
+    "stage6_v024_extended_sensitivity_audits": {
+      "scripts": [
+        "benchmarks/run_v024_adni_fusion_exposure_ecdf_audit.py",
+        "benchmarks/run_v024_pathology_tta_ablation_audit.py",
+        "benchmarks/run_v024_tcga_inductive_nonlung_owa_audit.py",
+        "benchmarks/verify_v024_table_parity.py"
+      ],
+      "description": "v0.2.4 faithful comparator objectives and batch coupling (MUSE_BatchGraph), symmetric p_drop=0.20 missingness exposure, same-visit and inner-3-fold ECDF referral, 6-regime pathology TTA ablations (with SAR and EATA), and strictly inductive 18,495-gene non-lung and within-cohort Z-residualized TCGA audits with OWA-FuzzyRough and continuous-time CoxPH."
     }
   },
   "environment_lock": {
@@ -60,6 +69,7 @@
     "data_benchmark/adni_processed/cohort4_oasis3_external.csv": "2420ba71369f17c878a3f24081fb58f4ec2f42802cbd3f1021f38551667220f2",
     "data_benchmark/adni_processed/OASIS3_diagnosis.csv": "28f537c89357948276b7a21c76698ab05f65e1aed2f8942b703a54842c6c9c83",
     "data_benchmark/wsi_data/clinical/tcga_precision_oncology_sample_biomarkers.csv": "61940b3daf5959f4f6bd3bdcd4ff5236a028aa4c59d39e5486ccd07abe68ec1f",
+    "data_benchmark/wsi_data/clinical/tcga_pancancer_all_18495_proteincoding_rnaseq.npz": "324d4e94e62b66ca2ac1a0b44058b257c5d736b653619fb2198f716839540fe7",
     "data_benchmark/wsi_data/clinical/tcga_pancancer_raw_proteincoding_rnaseq.npz": "f09eabb2fe2c7d5a4b657eab1fcde4752e40f214ae8f009538eac93b2842c6f3",
     "data_benchmark/wsi_data/clinical/tcga_pancancer_1000genes_rnaseq.npz": "a8b18555535a475f6e586973136448a881cbfc0b1fac212effda28d308ad012f",
     "data_benchmark/wsi_data/clinical/ReactomePathways.gmt": "a9feaa3ae9bbb746422cba77a669813de627fb15b7d7478b67c8d57020ec26ae",
@@ -83,8 +93,8 @@
     "data_benchmark/wsi_data/tcga_uni2h/TCGA-UCEC_uni2h_slides.npz": "73f6ba914f454ebb6e4116ebdd7f7e208f63581ccf825e352b10ee141ac9a855"
   },
   "code_sha256": {
-    "deepfuzzy/__init__.py": "124c0126ca5a259aaf5646ad3950b99fb9a4c1dd28b2a30f4985830078f38f4a",
-    "deepfuzzy/operators.py": "f0ae27d6f30785c0d79e6914313b4bb66972710a616e2e06f758c1df5d666775",
+    "deepfuzzy/__init__.py": "8fd28285da2babf74b84d2c70e9741daa451e4d974c4ec6e3b814bbaa836d85c",
+    "deepfuzzy/operators.py": "80bed877f4cabe11e2e5e6a803ad65db3c4358fad1e054df16464dc525a417be",
     "deepfuzzy/baselines.py": "f32bd8939c06bfc5982f6fade5f122455de878d60802038e3b38bf078e7db785",
     "deepfuzzy/missing_benchmark.py": "93fb39c9680e3a4a405d0a86e460e107206924e22a8baf740e86435d066c1da4",
     "deepfuzzy/conflict_injector.py": "1f1bec4eabcc4b312bfd99efdd7dfcc4a81e8d8e9488c7a1aac3705a7439e330",
@@ -93,18 +103,22 @@
     "deepfuzzy/visualization.py": "68925e9057f8a2febb3d5458eb2fa6c87bf9c0b1ef6c818705ebd79d04af2336",
     "benchmarks/fetch_tcga_1000genes_cbioportal.py": "04df8cadbf5bdd7918a20c6130d97104ac5e53538274663af7f1c058d34e7011",
     "benchmarks/run_full_benchmark.py": "d8f47b9c7337cfdcec0cfcce90faeb99cbfa5260848a6b5ffa2de18b723c7cbd",
-    "benchmarks/run_upgrades_and_pathway_audit.py": "f13f880a4848fac5ae7af8b44e46c57d01deeb3bc0ec415816fdddb18409c912",
-    "benchmarks/run_if_phase1_upgrades.py": "5a430952f7727e989e489966815d632fa084f3fd015523894ee5a23f7fb91200",
+    "benchmarks/run_upgrades_and_pathway_audit.py": "618d83f7149e0131a6f9070fe9d3aeec3b0b7a088c580dd155ea2cdaf2c990f4",
+    "benchmarks/run_if_phase1_upgrades.py": "96d7ad5b4fa92d669d12188be69373a5eb20365eff8805a19050ed5c38f7e5ba",
     "benchmarks/run_tabpfn_deepfuzzy_plugin.py": "29dc5a087f531b81d00fd548394beb9ce57ecca12f521e4050c5ada7f6829d9c",
     "benchmarks/run_runtime_vram_benchmark.py": "5dc2689ee6f967b71112637181375200019fbdea7de207e14734e15affd67787",
-    "benchmarks/update_r3_gpu_artifacts.py": "2bf952ed76fcf0756bc4846c499b469b8cf1522e8e4be51f001c06570143b63a",
+    "benchmarks/run_v024_adni_fusion_exposure_ecdf_audit.py": "d81f5619baca5d7da898bab434690de523c3cbfd018320ab476cc85fc4beb8b5",
+    "benchmarks/run_v024_pathology_tta_ablation_audit.py": "ae4350c1f23fb4f125950ab0861f175c6aba7f0ed6be3625d65937d398c6574e",
+    "benchmarks/run_v024_tcga_inductive_nonlung_owa_audit.py": "42dfc99accf3bc669865c5c86d0c9de88b6e49c8475f3d82097a3ff398fc9c54",
+    "benchmarks/verify_v024_table_parity.py": "c0b8ade6017388d8afaf4bcfee38065e660c517f776ad2b210e2c1547092b933",
+    "benchmarks/update_r3_gpu_artifacts.py": "8ac36a9376d73737be7c763c1e1dbff109dd8fdd4bb362eb013357b66bcca8a9",
     "benchmarks/export_tables_and_manuscript.py": "2f49e2539a38b35dc897fc5b02390b1e71e34de97223bf371333491d174462b3",
     "examples/quickstart_synthetic_demo.py": "8ef1f1b9aa20a9b4e7d182b87b8a399aa04634b0b7ea0c64dd321370648d5dd4",
-    "tests/test_operators_and_theorems.py": "299cfb0a7d8b796d7c322fe1413977bf16af754e3014ee5b3e210e298484d81a",
-    "benchmarks/build_companion_manuscripts.py": "e94845cf65cb50062914fb70c9d0676c56163f17aa6d0d074c9cef62ef268e8d",
+    "tests/test_operators_and_theorems.py": "d1d64d23b5278192bf0bfcc255cad86d6f6acb6f6ce9687863685e458bc767f4",
+    "benchmarks/build_companion_manuscripts.py": "893a50714554c1a913d7101f680fef4269b397a331df08b8a4d2803049320086",
     "figures/fig0_redesign_20261108/generate_fig0_clean.py": "107c2945059159d7557161c1bc9f081183d0d21127487797c1fe2f067b682031",
-    "pyproject.toml": "92a6e8ac3db19572db63275106c50f7372694498ca0f0ab3b7d93922c0f93ccb",
-    "README.md": "5512ca31cfe3f4191af6cb8cdbef2c5fe69072fa9b4771bdefbbbfe0e726a26e"
+    "pyproject.toml": "a41d78c9979845ac607e13b95885ecd8f7d9f8882b819fe81133717cb24b8228",
+    "README.md": "c70b314953622b6422e1dbc4bbc93babebf7626522241152b4ca49b535712145"
   },
   "artifact_sha256": {
     "results/benchmark_results.json": "3528abae22cf8dc896564681657f34b0eae1299dcfd5d0435441777941848a5f",
@@ -119,6 +133,11 @@
     "results/adni2_5fold_deepfuzzy_states.pt": "0983cd4f952c177b22ee61bc9ea08914b17e890a28257bf5a0b95b0c2064bd55",
     "results/BENCHMARK_TABLES_SUMMARY.md": "2bee35ac4f98f88224c1618d2b923cac9109e492a8e2f49c6d411a04cbdc46c9",
     "results/BENCHMARK_SUMMARY_REPORT.md": "2bee35ac4f98f88224c1618d2b923cac9109e492a8e2f49c6d411a04cbdc46c9",
+    "results/v024_adni_fusion_exposure_ecdf_audit.json": "a3745a40703e1b007ad81bc69658ca90a97abd73d2698ad2ee1ef7ddb3d7eaaa",
+    "results/v024_adni_oof_arrays.npz": "13767a4395be69d26a7d26cf7d29da181b5a62a9e69e5cb69ba79a97ffdab82c",
+    "results/v024_pathology_tta_ablation_audit.json": "fa0f210afab7c2fe8e53132b97f6fc2bfda80caa4336cd8899cf0e3ab8559ace",
+    "results/v024_tcga_inductive_nonlung_owa_audit.json": "815001165eefe4bb8e567b700b09de9b730381008b125a3a43da571d668f8d5c",
+    "results/V024_EXTENDED_SENSITIVITY_SUMMARY.md": "1a32cafe1c975ddf9b0a5ac87b3f0b002fe40a81cf7ea220c62bbb664ff9fd79",
     "figures/Fig1_Mathematical_Theorems_Verification.pdf": "36eb986e0d177aecf0cfe6854391a9fcd8956c453887f87f2954c39aa9c0cb5f",
     "figures/Fig1_Mathematical_Theorems_Verification.png": "5d389931abcc1489df0053aa7372b69eed84b4ff6f32916ede1dde3fd871924f",
     "figures/Fig2_Missing_Modality_Benchmark.pdf": "8812de2be082fbe77c7607c9aa984aa4cd09ef1a8dbdde0938d0c3e9fab477cf",
@@ -131,22 +150,22 @@
     "figures/Fig5_Clinical_DCA_Calibration_and_TSK_Rules.png": "880742b4f9102dd5c49cc5bd2c77d07552179aefc087dcb83852cbb2a4858da4",
     "figures/Fig6_HighDim_TCGA_Transcriptomic_Reduct_and_Reactome.pdf": "29bafd8623454ccc5c87fc7b6ed41ecd50ca80c40949e6c593d6f1183c49ed40",
     "figures/Fig6_HighDim_TCGA_Transcriptomic_Reduct_and_Reactome.png": "9602bf6c24c594a408880115cc625e29352d20417ac0d061de0881c6282223de",
-    "results/latex_audit_report.json": "eeb5bda45e49ec49d36bda4dfc992a4037643278f2a2f75a9ceffdb21495d3b4",
+    "results/latex_audit_report.json": "c6579e1aded4714eb30330f3777c142630f6ad043774977a027e0e75a4b644e7",
     "figures/Fig0_Paradigm_Teaser_Comparison.pdf": "787249637cd7484ea7b0212969d9b5bfea1ed3bea189d7c0babbfd1062b57892",
     "figures/Fig0_Paradigm_Teaser_Comparison.png": "037ad7feee16a2da67a9f5c99f589b4055c8a4234bf67cd2726c47eba680ef64",
     "figures/Fig0_System_Architecture_Overview.pdf": "cf83055f7ec6dd1c035800304e9710c8e105e286ec9f67810b5ca6bc5227e40a",
     "figures/Fig0_System_Architecture_Overview.png": "3fdcc896502005a7e240ba759787fc004f3de0b72da836fc63c6c2fecd9d0483",
     "paper/Highlights_Information_Fusion.md": "e99b5dcb7cb00fdaad4f62d2ff6c0b62dfc8b3639d39d8e0de15f3105864d41a",
     "paper/THEOREM_PROOFS_COMPLETE.md": "754351f1cbca29c49a42a4656b466af0e010507d0ee3bee724a58b67930f57f6",
-    "paper/references.bib": "1939949f559bb770704a923a2a34fb4cad1cf2e1cbc4be0d8cfda05ad9155e9e",
-    "paper/manuscript_Information_Fusion.tex": "1b7a15c76f3c1544e5da4bb4c5eb8f276465e0180cfe47e48cf7a430badf9b93",
-    "paper/manuscript_Information_Fusion.bbl": "a89837361a91a889acc8ca381d6915b539d8c02d8f2477e37907a08f7868120d",
-    "paper/manuscript_Information_Fusion.pdf": "41384039ed48fb1644c928dfc96925c95c2f33799d2a0bdbf8b676fc4426c7e8",
-    "paper/manuscript_Nature_Communications.tex": "06fc9232f02a752e2c9e41bc5c7b34d6eef326c1efa422b1e88c3890dff2c7da",
-    "paper/manuscript_Nature_Communications.bbl": "36f187826243d5e06d48e54e05a96d295ef9ae9b46ae2b90cb0a83504dfce9ce",
-    "paper/manuscript_Nature_Communications.pdf": "8799a6628daca17915a8a073240778e09a69d9488bc8fad4970bc0710f2e0bef",
-    "paper/manuscript_Genome_Biology_Software.tex": "7f0c7faa915df056ee79302fb92456ab80f625e2e4b414e0865eff4e9dbbff36",
-    "paper/manuscript_Genome_Biology_Software.bbl": "1f4a272ad420d970026afae3b7d23ba03dceace8c917a83579966c5fd4faeb7f",
-    "paper/manuscript_Genome_Biology_Software.pdf": "b9397e15580586b3049a33fb6be26f86dfcfc7d3f7f4f55ad072f4f6654493bd"
+    "paper/references.bib": "0dbe269421a01098d48645ab4c14930546ea4f3cc71a8693f2163ebb25607fd6",
+    "paper/manuscript_Information_Fusion.tex": "7f573af617d55a7bceccc38a590900dee1be744f52015cefda0495ec30c5ca55",
+    "paper/manuscript_Information_Fusion.bbl": "59d80337328f78c64f017ed5b8ee506bcd37170f3f669fd97ea80144212a0e1a",
+    "paper/manuscript_Information_Fusion.pdf": "b845be122a6bebf7f374959c5a4fcd7caa03da13dbf3268b7c70ebbf08e612c4",
+    "paper/manuscript_Nature_Communications.tex": "c8528d37fd6947fd18d198bc7b02a511b31d3fb94fa90d7eef9e94bf299eb2c3",
+    "paper/manuscript_Nature_Communications.bbl": "ba7634dac5ccd92813d5ff349bd6b0fff043e13cf39f5c23cbd07b2f50942f03",
+    "paper/manuscript_Nature_Communications.pdf": "84fcae77c8955a36c217019e86bec5d583abb4e6171a0a4ec3c54b6ff8a07928",
+    "paper/manuscript_Genome_Biology_Software.tex": "ac1dae1113eff7ecdb8e66c637b56237dd2693319ca0f182ec8e874d7f2d2d18",
+    "paper/manuscript_Genome_Biology_Software.bbl": "fbbac5a31f5dbc848b2dea28b7ef3f4924e3b341115885b85c7003446b40f5f4",
+    "paper/manuscript_Genome_Biology_Software.pdf": "ca7cf87325c825c43b2efe7eb10e96fd1800587e71c096e0b7c2f23183369145"
   }
 }

@@ -266,7 +266,8 @@ def compute_strictly_nested_adni_triage_caches(
 
     # ---- ADNI Cohort 1 replay (exact run_track1 settings) ----
     adni1_data = load_adni_cohort1(adni_dir)
-    assert np.array_equal(adni1_data["rids"], c1_df["RID"].values), "C1 row mismatch"
+    if not np.array_equal(adni1_data["rids"], c1_df["RID"].values):
+        raise RuntimeError("C1 row mismatch")
     X1_raw_list = adni1_data["X_modalities"]
     y1 = adni1_data["y_amyloid"]
     mri1_cols = adni1_data["mri_cols"]
@@ -302,7 +303,8 @@ def compute_strictly_nested_adni_triage_caches(
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     for fold_idx, (tr_idx, va_idx) in enumerate(skf.split(X1_raw_list[0], y1)):
         expected_va = np.where(fids_c1 == fold_idx)[0]
-        assert np.array_equal(va_idx, expected_va), f"C1 fold {fold_idx} index mismatch"
+        if not np.array_equal(va_idx, expected_va):
+            raise RuntimeError(f"C1 fold {fold_idx} index mismatch")
 
         X_mri_tr_s, _, _, _ = fit_strict_preprocessor([X1_raw_list[0][tr_idx]], [X1_raw_list[0][va_idx]])
         reducer_f = FuzzyRoughFeatureReducer(
@@ -385,13 +387,15 @@ def compute_strictly_nested_adni_triage_caches(
     for m_name in c1_models:
         max_diff = float(np.max(np.abs(c1_caches[m_name]["replayed_va_prob"] - npz_data[f"adni1_prob_{m_name}"])))
         repro_report["c1_max_prob_abs_diff"][m_name] = max_diff
-        assert max_diff < 1e-5, f"C1 replay mismatch for {m_name}: max_abs_diff={max_diff}"
+        if not (max_diff < 1e-5):
+            raise RuntimeError(f"C1 replay mismatch for {m_name}: max_abs_diff={max_diff}")
 
     # ---- ADNI Cohort 2 replay (exact run_track2 settings) ----
     c2_full = pd.read_csv(os.path.join(adni_dir, "cohort2_adni_ptau217_gfap.csv")).copy()
     c2_full = c2_full.assign(PTGENDER_num=(c2_full["PTGENDER"] == "Male").astype(float)).copy()
     sub2 = c2_full[c2_full["amyloid_gold_pos"].notna()].copy().reset_index(drop=True)
-    assert np.array_equal(sub2["RID"].values, c2_df["RID"].values), "C2 row mismatch"
+    if not np.array_equal(sub2["RID"].values, c2_df["RID"].values):
+        raise RuntimeError("C2 row mismatch")
     y2 = sub2["amyloid_gold_pos"].values.astype(np.float32)
     N2 = len(y2)
     macro_cols2 = [
@@ -434,7 +438,8 @@ def compute_strictly_nested_adni_triage_caches(
 
     for fold_idx, (tr_i, va_i) in enumerate(skf.split(X2_mri_full, y2)):
         expected_va2 = np.where(fids_c2 == fold_idx)[0]
-        assert np.array_equal(va_i, expected_va2), f"C2 fold {fold_idx} index mismatch"
+        if not np.array_equal(va_i, expected_va2):
+            raise RuntimeError(f"C2 fold {fold_idx} index mismatch")
 
         X_mri_tr_all_s, _, _, _ = fit_strict_preprocessor([X2_mri_full[tr_i]], [X2_mri_full[va_i]])
         red_c2 = FuzzyRoughFeatureReducer(
@@ -506,7 +511,8 @@ def compute_strictly_nested_adni_triage_caches(
     for m_name in c2_models:
         max_diff2 = float(np.max(np.abs(c2_caches[m_name]["replayed_va_prob"] - npz_data[f"adni2_prob_{m_name}"])))
         repro_report["c2_max_prob_abs_diff"][m_name] = max_diff2
-        assert max_diff2 < 1e-5, f"C2 replay mismatch for {m_name}: max_abs_diff={max_diff2}"
+        if not (max_diff2 < 1e-5):
+            raise RuntimeError(f"C2 replay mismatch for {m_name}: max_abs_diff={max_diff2}")
 
     return c1_caches, c2_caches, repro_report
 
@@ -1324,8 +1330,10 @@ def main():
             X_tr_top20_raw, X_va_top20_raw
         )
         va_rep_4m, m_rep_4m = apply_strict_preprocessor_params(X_va_top20_raw, prep_4m)
-        assert float(np.max(np.abs(X_va_top20_s[1] - va_rep_4m[1]))) == 0.0
-        assert float(np.max(np.abs(m_va_top20[:, 1] - m_rep_4m[:, 1]))) == 0.0
+        if float(np.max(np.abs(X_va_top20_s[1] - va_rep_4m[1]))) != 0.0:
+            raise RuntimeError("TCGA 4-mod X_va replay mismatch")
+        if float(np.max(np.abs(m_va_top20[:, 1] - m_rep_4m[:, 1]))) != 0.0:
+            raise RuntimeError("TCGA 4-mod mask replay mismatch")
         npz_data[f"tcga4mod_fold{f_i}_rna20_median"] = prep_4m[1]["median"]
         npz_data[f"tcga4mod_fold{f_i}_rna20_mean"] = prep_4m[1]["mean"]
         npz_data[f"tcga4mod_fold{f_i}_rna20_std"] = prep_4m[1]["std"]
@@ -1397,7 +1405,8 @@ def main():
                 rna_tr_20[obs_rna_mask[tr_i] < 0.5] = np.nan
                 rna_va_20[obs_rna_mask[va_i] < 0.5] = np.nan
             else:
-                assert s_idx is not None
+                if s_idx is None:
+                    raise RuntimeError("Expected selected gene indices for inductive selector")
                 rna_tr_20 = X_rna_1000_nan[tr_i][:, s_idx]
                 rna_va_20 = X_rna_1000_nan[va_i][:, s_idx]
 

@@ -1,6 +1,6 @@
 {
   "file": "paper/manuscript_Information_Fusion.tex",
-  "line_count": 2955,
+  "line_count": 3166,
   "sentence_word_limit": 95,
   "source_line_char_limit": 95,
   "max_source_line_chars": 95,
@@ -19,14 +19,15 @@
     "Declaration of Competing Interest",
     "Data and Code Availability",
     "Mathematical Proofs of Theorems 1--5 and Corollary 2.1",
-    "Cohort Provenance, Timestamp Auditing, and Architectural Specifications"
+    "Cohort Provenance, Timestamp Auditing, and Architectural Specifications",
+    "Extended Comparator Fidelity, Exposure Symmetry, TTA, and Inductive Omics Audits"
   ],
   "subsection_count": 19,
   "counts": {
     "definitions": 5,
     "theorems": 5,
     "remarks": 3,
-    "tables": 8,
+    "tables": 11,
     "figures": 8,
     "algorithms": 1
   },
@@ -37,43 +38,43 @@
     "has_paper_roadmap": true,
     "has_evaluation_questions_or_axes": true,
     "has_discussion_section": true,
-    "overlong_sentence_count_gt_95_words": 0,
+    "overlong_sentence_count_gt_95_words": 1,
     "overlong_source_line_count_gt_95_chars": 0
   },
   "overlong_sentences_top10": [],
   "companion_manuscripts": {
     "paper/manuscript_Information_Fusion.tex": {
-      "lines": 2955,
-      "max_sentence_words": 84,
-      "max_sentence_words_incl_math": 119,
-      "overlong_gt_95": 0,
+      "lines": 3166,
+      "max_sentence_words": 170,
+      "max_sentence_words_incl_math": 190,
+      "overlong_gt_95": 1,
       "max_source_line_chars": 95,
       "overlong_source_line_gt_95_chars": 0,
       "overfull_hbox_count": 0,
       "overfull_vbox_count": 0,
-      "bib_keys_cited": 74
+      "bib_keys_cited": 76
     },
     "paper/manuscript_Nature_Communications.tex": {
-      "lines": 2959,
-      "max_sentence_words": 84,
-      "max_sentence_words_incl_math": 119,
-      "overlong_gt_95": 0,
+      "lines": 3170,
+      "max_sentence_words": 170,
+      "max_sentence_words_incl_math": 190,
+      "overlong_gt_95": 1,
       "max_source_line_chars": 95,
       "overlong_source_line_gt_95_chars": 0,
       "overfull_hbox_count": 0,
       "overfull_vbox_count": 0,
-      "bib_keys_cited": 74
+      "bib_keys_cited": 76
     },
     "paper/manuscript_Genome_Biology_Software.tex": {
-      "lines": 2990,
-      "max_sentence_words": 84,
-      "max_sentence_words_incl_math": 119,
-      "overlong_gt_95": 0,
+      "lines": 3199,
+      "max_sentence_words": 170,
+      "max_sentence_words_incl_math": 190,
+      "overlong_gt_95": 1,
       "max_source_line_chars": 95,
       "overlong_source_line_gt_95_chars": 0,
       "overfull_hbox_count": 0,
       "overfull_vbox_count": 0,
-      "bib_keys_cited": 74
+      "bib_keys_cited": 76
     }
   },
   "rendered_pdf_overfull_hbox_all": 0

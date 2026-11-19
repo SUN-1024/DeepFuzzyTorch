@@ -66,13 +66,14 @@ def _write_manifest_lock(
     cohort_accounting: dict,
     relock_only: bool = False,
 ) -> dict:
-    """Write the 89-entry SHA-256 reproducibility manifest covering data, code, and artifacts."""
+    """Write the SHA-256 reproducibility manifest covering data, code, and artifacts."""
     data_files_rel = [
         "data_benchmark/adni_processed/cohort1_adni_ptau181_313roi.csv",
         "data_benchmark/adni_processed/cohort2_adni_ptau217_gfap.csv",
         "data_benchmark/adni_processed/cohort4_oasis3_external.csv",
         "data_benchmark/adni_processed/OASIS3_diagnosis.csv",
         "data_benchmark/wsi_data/clinical/tcga_precision_oncology_sample_biomarkers.csv",
+        "data_benchmark/wsi_data/clinical/tcga_pancancer_all_18495_proteincoding_rnaseq.npz",
         "data_benchmark/wsi_data/clinical/tcga_pancancer_raw_proteincoding_rnaseq.npz",
         "data_benchmark/wsi_data/clinical/tcga_pancancer_1000genes_rnaseq.npz",
         "data_benchmark/wsi_data/clinical/ReactomePathways.gmt",
@@ -100,6 +101,10 @@ def _write_manifest_lock(
         "benchmarks/run_if_phase1_upgrades.py",
         "benchmarks/run_tabpfn_deepfuzzy_plugin.py",
         "benchmarks/run_runtime_vram_benchmark.py",
+        "benchmarks/run_v024_adni_fusion_exposure_ecdf_audit.py",
+        "benchmarks/run_v024_pathology_tta_ablation_audit.py",
+        "benchmarks/run_v024_tcga_inductive_nonlung_owa_audit.py",
+        "benchmarks/verify_v024_table_parity.py",
         "benchmarks/update_r3_gpu_artifacts.py",
         "benchmarks/export_tables_and_manuscript.py",
         "examples/quickstart_synthetic_demo.py",
@@ -122,6 +127,11 @@ def _write_manifest_lock(
         "results/adni2_5fold_deepfuzzy_states.pt",
         "results/BENCHMARK_TABLES_SUMMARY.md",
         "results/BENCHMARK_SUMMARY_REPORT.md",
+        "results/v024_adni_fusion_exposure_ecdf_audit.json",
+        "results/v024_adni_oof_arrays.npz",
+        "results/v024_pathology_tta_ablation_audit.json",
+        "results/v024_tcga_inductive_nonlung_owa_audit.json",
+        "results/V024_EXTENDED_SENSITIVITY_SUMMARY.md",
         "figures/Fig1_Mathematical_Theorems_Verification.pdf",
         "figures/Fig1_Mathematical_Theorems_Verification.png",
         "figures/Fig2_Missing_Modality_Benchmark.pdf",
@@ -153,6 +163,23 @@ def _write_manifest_lock(
         "paper/manuscript_Genome_Biology_Software.pdf",
     ]
 
+    data_sha256 = {
+        rel: sha256_file(os.path.join(WORKSPACE_DIR, rel))
+        for rel in data_files_rel
+        if os.path.exists(os.path.join(WORKSPACE_DIR, rel))
+    }
+    code_sha256 = {
+        rel: sha256_file(os.path.join(WORKSPACE_DIR, rel))
+        for rel in code_files_rel
+        if os.path.exists(os.path.join(WORKSPACE_DIR, rel))
+    }
+    artifact_sha256 = {
+        rel: sha256_file(os.path.join(WORKSPACE_DIR, rel))
+        for rel in artifact_files_rel
+        if os.path.exists(os.path.join(WORKSPACE_DIR, rel))
+    }
+    total_manifest_entries = len(data_sha256) + len(code_sha256) + len(artifact_sha256)
+
     manifest = {
         "execution_command": (
             "PYTHONPATH=. python benchmarks/update_r3_gpu_artifacts.py --relock-only"
@@ -182,7 +209,16 @@ def _write_manifest_lock(
             },
             "stage5_sha256_reproducibility_lock": {
                 "script": "benchmarks/update_r3_gpu_artifacts.py",
-                "description": "Fold preprocessor replay verification, Fold 0 checkpoint archive, publication figures, compiled manuscripts, and 89-entry SHA-256 inventory.",
+                "description": f"Fold preprocessor replay verification, Fold 0 checkpoint archive, publication figures, compiled manuscripts, and {total_manifest_entries}-entry SHA-256 inventory.",
+            },
+            "stage6_v024_extended_sensitivity_audits": {
+                "scripts": [
+                    "benchmarks/run_v024_adni_fusion_exposure_ecdf_audit.py",
+                    "benchmarks/run_v024_pathology_tta_ablation_audit.py",
+                    "benchmarks/run_v024_tcga_inductive_nonlung_owa_audit.py",
+                    "benchmarks/verify_v024_table_parity.py",
+                ],
+                "description": "v0.2.4 faithful comparator objectives and batch coupling (MUSE_BatchGraph), symmetric p_drop=0.20 missingness exposure, same-visit and inner-3-fold ECDF referral, 6-regime pathology TTA ablations (with SAR and EATA), and strictly inductive 18,495-gene non-lung and within-cohort Z-residualized TCGA audits with OWA-FuzzyRough and continuous-time CoxPH.",
             },
         },
         "environment_lock": {
@@ -198,21 +234,9 @@ def _write_manifest_lock(
             "matplotlib": matplotlib.__version__,
         },
         "cohort_accounting": cohort_accounting,
-        "data_sha256": {
-            rel: sha256_file(os.path.join(WORKSPACE_DIR, rel))
-            for rel in data_files_rel
-            if os.path.exists(os.path.join(WORKSPACE_DIR, rel))
-        },
-        "code_sha256": {
-            rel: sha256_file(os.path.join(WORKSPACE_DIR, rel))
-            for rel in code_files_rel
-            if os.path.exists(os.path.join(WORKSPACE_DIR, rel))
-        },
-        "artifact_sha256": {
-            rel: sha256_file(os.path.join(WORKSPACE_DIR, rel))
-            for rel in artifact_files_rel
-            if os.path.exists(os.path.join(WORKSPACE_DIR, rel))
-        },
+        "data_sha256": data_sha256,
+        "code_sha256": code_sha256,
+        "artifact_sha256": artifact_sha256,
     }
     manifest_path = os.path.join(results_dir, "reproducibility_manifest.json")
     with open(manifest_path, "w", encoding="utf-8") as f:
@@ -321,8 +345,10 @@ def main() -> None:
         X_tr_s, X_va_s, m_tr, m_va, prep_params_f = fit_strict_preprocessor_with_params(X_tr_raw, X_va_raw)
         X_va_replay, m_va_replay = apply_strict_preprocessor_params(X_va_raw, prep_params_f)
         for m_i in range(4):
-            assert float(np.max(np.abs(X_va_s[m_i] - X_va_replay[m_i]))) == 0.0
-            assert float(np.max(np.abs(m_va[:, m_i] - m_va_replay[:, m_i]))) == 0.0
+            if not (float(np.max(np.abs(X_va_s[m_i] - X_va_replay[m_i]))) == 0.0):
+                raise AssertionError('Internal invariant failed: float(np.max(np.abs(X_va_s[m_i] - X_va_replay[m_i]))) == 0.0')
+            if not (float(np.max(np.abs(m_va[:, m_i] - m_va_replay[:, m_i]))) == 0.0):
+                raise AssertionError('Internal invariant failed: float(np.max(np.abs(m_va[:, m_i] - m_va_replay[:, m_i]))) == 0.0')
             npz_data[f"adni1_fold{fold_idx}_mod{m_i}_median"] = prep_params_f[m_i]["median"]
             npz_data[f"adni1_fold{fold_idx}_mod{m_i}_mean"] = prep_params_f[m_i]["mean"]
             npz_data[f"adni1_fold{fold_idx}_mod{m_i}_std"] = prep_params_f[m_i]["std"]
@@ -408,7 +434,8 @@ def main() -> None:
     )
     va_rep_nm, _ = apply_strict_preprocessor_params([X_oa_mri_ext, X_oa_cl_nm], p_oa_nm)
     for m_i in range(2):
-        assert float(np.max(np.abs(va_oa_nm[m_i] - va_rep_nm[m_i]))) == 0.0
+        if not (float(np.max(np.abs(va_oa_nm[m_i] - va_rep_nm[m_i]))) == 0.0):
+            raise AssertionError('Internal invariant failed: float(np.max(np.abs(va_oa_nm[m_i] - va_rep_nm[m_i]))) == 0.0')
         npz_data[f"oasis3_nommse_mod{m_i}_median"] = p_oa_nm[m_i]["median"]
         npz_data[f"oasis3_nommse_mod{m_i}_mean"] = p_oa_nm[m_i]["mean"]
         npz_data[f"oasis3_nommse_mod{m_i}_std"] = p_oa_nm[m_i]["std"]
@@ -420,7 +447,8 @@ def main() -> None:
     )
     va_rep_mm, _ = apply_strict_preprocessor_params([X_oa_mri_ext, X_oa_cl_mm], p_oa_mm)
     for m_i in range(2):
-        assert float(np.max(np.abs(va_oa_mm[m_i] - va_rep_mm[m_i]))) == 0.0
+        if not (float(np.max(np.abs(va_oa_mm[m_i] - va_rep_mm[m_i]))) == 0.0):
+            raise AssertionError('Internal invariant failed: float(np.max(np.abs(va_oa_mm[m_i] - va_rep_mm[m_i]))) == 0.0')
         npz_data[f"oasis3_mmse_mod{m_i}_median"] = p_oa_mm[m_i]["median"]
         npz_data[f"oasis3_mmse_mod{m_i}_mean"] = p_oa_mm[m_i]["mean"]
         npz_data[f"oasis3_mmse_mod{m_i}_std"] = p_oa_mm[m_i]["std"]
@@ -532,8 +560,10 @@ def main() -> None:
         npz_data[f"tcga_fold{f_i}_wsi_pca_mean"] = pca_wsi.mean_.astype(np.float32)
         npz_data[f"tcga_fold{f_i}_wsi_pca_components"] = pca_wsi.components_.astype(np.float32)
         for m_i in range(3):
-            assert float(np.max(np.abs(va_st4[m_i] - va_rept4[m_i]))) == 0.0
-            assert float(np.max(np.abs(m_vat4[:, m_i] - m_rept4[:, m_i]))) == 0.0
+            if not (float(np.max(np.abs(va_st4[m_i] - va_rept4[m_i]))) == 0.0):
+                raise AssertionError('Internal invariant failed: float(np.max(np.abs(va_st4[m_i] - va_rept4[m_i]))) == 0.0')
+            if not (float(np.max(np.abs(m_vat4[:, m_i] - m_rept4[:, m_i]))) == 0.0):
+                raise AssertionError('Internal invariant failed: float(np.max(np.abs(m_vat4[:, m_i] - m_rept4[:, m_i]))) == 0.0')
             npz_data[f"tcga_fold{f_i}_mod{m_i}_median"] = p_t4[m_i]["median"]
             npz_data[f"tcga_fold{f_i}_mod{m_i}_mean"] = p_t4[m_i]["mean"]
             npz_data[f"tcga_fold{f_i}_mod{m_i}_std"] = p_t4[m_i]["std"]

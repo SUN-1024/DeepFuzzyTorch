@@ -1143,7 +1143,8 @@ def _eval_fp16_vjp_to_roots(
                             return None
                         if len(active_ea) == 1:
                             a0 = active_ea[0]
-                            assert a0 is not None
+                            if not (a0 is not None):
+                                raise AssertionError('Internal invariant failed: a0 is not None')
                             if int(a0.numel()) == math.prod(sh0):
                                 node_alpha[(cid, 0)] = a0.reshape(sh0)
                             else:
@@ -1151,10 +1152,12 @@ def _eval_fp16_vjp_to_roots(
                         else:
                             acc_a: Optional[torch.Tensor] = None
                             for ea in active_ea:
-                                assert ea is not None
+                                if not (ea is not None):
+                                    raise AssertionError('Internal invariant failed: ea is not None')
                                 b_a = ea.reshape(sh0) if int(ea.numel()) == math.prod(sh0) else torch.broadcast_to(ea, sh0)
                                 acc_a = b_a.clone() if acc_a is None else torch.minimum(acc_a, b_a)
-                            assert acc_a is not None
+                            if not (acc_a is not None):
+                                raise AssertionError('Internal invariant failed: acc_a is not None')
                             node_alpha[(cid, 0)] = acc_a
                     else:
                         if sh0 is not None and all(
@@ -5038,7 +5041,8 @@ def _sanitize_half_prec_ifn_for_work(
     mu_w = _promote_low_prec_cached(mu, work_dtype, cache, fp16_max=fp16_max)
     nu_w = _promote_low_prec_cached(nu, work_dtype, cache, fp16_max=fp16_max)
     pi_w = _promote_low_prec_cached(pi, work_dtype, cache, fp16_max=fp16_max) if pi is not None else None
-    assert mu_w is not None and nu_w is not None
+    if not (mu_w is not None and nu_w is not None):
+        raise AssertionError('Internal invariant failed: mu_w is not None and nu_w is not None')
     if (not all_have_work) and raw_lp_dtypes and pi_w is not None:
         lp_eps = max(float(torch.finfo(dt).eps) for dt in raw_lp_dtypes)
         mu_f = mu_w.detach()
@@ -5307,7 +5311,8 @@ class IntuitionisticFuzzyTensor:
                 mu_w, _, pi_w = _sanitize_half_prec_ifn_for_work(
                     self.mu, self.nu, self.pi, work_dt, cache, fp16_max=fp16_cap
                 )
-                assert pi_w is not None
+                if not (pi_w is not None):
+                    raise AssertionError('Internal invariant failed: pi_w is not None')
                 p_w = _clamp_preserve_boundary_grad(mu_w + 0.5 * pi_w, 0.0, 1.0)
                 return _bridge_work_via_lp(p_w, orig_dt)[1]
             return _clamp_preserve_boundary_grad(self.mu + 0.5 * self.pi, 0.0, 1.0)
@@ -5327,7 +5332,8 @@ class IntuitionisticFuzzyTensor:
                 _, _, pi_w = _sanitize_half_prec_ifn_for_work(
                     self.mu, self.nu, self.pi, work_dt, cache, fp16_max=fp16_cap
                 )
-                assert pi_w is not None
+                if not (pi_w is not None):
+                    raise AssertionError('Internal invariant failed: pi_w is not None')
                 return _bridge_work_via_lp((1.0 - pi_w).clamp(0.0, 1.0), orig_dt)[1]
             return (1.0 - self.pi).clamp(0.0, 1.0)
 
@@ -6027,7 +6033,8 @@ class IFSChoquetFusion(nn.Module):
                 mu_w = _promote_low_prec_cached(mu_stack, work_dt, cache, fp16_max=fp16_cap)
                 nu_w = _promote_low_prec_cached(nu_stack, work_dt, cache, fp16_max=fp16_cap)
                 obs_w = _promote_low_prec_cached(obs_mask, work_dt, cache, fp16_max=fp16_cap)
-                assert mu_w is not None and nu_w is not None and obs_w is not None
+                if not (mu_w is not None and nu_w is not None and obs_w is not None):
+                    raise AssertionError('Internal invariant failed: mu_w is not None and nu_w is not None and obs_w is not None')
                 avg_c, pair_c = self.compute_pairwise_conflict(mu_w, nu_w, obs_w)
                 out_dt = orig_dtype if orig_dtype in _HALF_PREC_DTYPES else nu_stack.dtype
                 return _bridge_work_via_lp(avg_c, out_dt)[1], _bridge_work_via_lp(pair_c, out_dt)[1]
@@ -6101,7 +6108,8 @@ class IFSChoquetFusion(nn.Module):
                     mw, nw, pw = _sanitize_half_prec_ifn_for_work(
                         m_t, n_t, p_t, work_dt, lp_cache, fp16_max=fp16_fuse_cap
                     )
-                    assert pw is not None
+                    if not (pw is not None):
+                        raise AssertionError('Internal invariant failed: pw is not None')
                     mu_work_list.append(mw)
                     nu_work_list.append(nw)
                     pi_work_list.append(pw)
@@ -6155,13 +6163,15 @@ class IFSChoquetFusion(nn.Module):
                 weights.scatter_(dim=1, index=sort_idx, src=w_sorted)
             else:
                 logits_prm = _promote_low_prec_cached(self.fuzzy_density_logits, work_dt, lp_cache)
-                assert logits_prm is not None
+                if not (logits_prm is not None):
+                    raise AssertionError('Internal invariant failed: logits_prm is not None')
                 logits = logits_prm.to(dtype=work_dt)
                 if logits.shape[1] != C:
                     logits = logits[:, :1].expand(self.num_modalities, C)
                 base_g = (F.softplus(logits) + 1e-3).unsqueeze(0).expand_as(r_stack)
                 eta_prm = _promote_low_prec_cached(self.choquet_lambda_raw, work_dt, lp_cache)
-                assert eta_prm is not None
+                if not (eta_prm is not None):
+                    raise AssertionError('Internal invariant failed: eta_prm is not None')
                 eta = eta_prm.to(dtype=work_dt)
                 if eta.shape[1] != C:
                     eta = eta[:, :1].expand(1, C)
@@ -6435,7 +6445,8 @@ class IFSChoquetFusion(nn.Module):
             pis = [x.pi for x in ifns_or_mu_list]  # type: ignore[union-attr]
             return self._fuse_tensors(mus, nus, pis)
         else:
-            assert nu_list is not None and pi_list is not None
+            if not (nu_list is not None and pi_list is not None):
+                raise AssertionError('Internal invariant failed: nu_list is not None and pi_list is not None')
             _, aux = self._fuse_tensors(
                 ifns_or_mu_list, nu_list, pi_list  # type: ignore[arg-type]
             )
@@ -6489,7 +6500,8 @@ class HesitantFuzzyAggregator(nn.Module):
                 if h_set.dtype in _HALF_PREC_DTYPES:
                     fp16_cap = _fp16_cap_for_inputs(h_set)
                     h_w = _promote_low_prec_cached(h_set, work_dt, {}, fp16_max=fp16_cap)
-                    assert h_w is not None
+                    if not (h_w is not None):
+                        raise AssertionError('Internal invariant failed: h_w is not None')
                     return _bridge_work_via_lp(self.compute_hesitant_entropy(h_w), h_set.dtype)[1]
                 h_w = h_set.to(dtype=work_dt)
                 return self.compute_hesitant_entropy(h_w).to(dtype=h_set.dtype)
@@ -7213,7 +7225,8 @@ class PythagoreanFuzzyTTALoss(nn.Module):
         if isinstance(ifn_or_mu, IntuitionisticFuzzyTensor):
             mu_raw, nu_raw, pi_raw = ifn_or_mu.mu, ifn_or_mu.nu, ifn_or_mu.pi
         else:
-            assert nu_c is not None and pi_c is not None
+            if not (nu_c is not None and pi_c is not None):
+                raise AssertionError('Internal invariant failed: nu_c is not None and pi_c is not None')
             mu_raw, nu_raw, pi_raw = ifn_or_mu, nu_c, pi_c
 
         mu_in = torch.nan_to_num(mu_raw, nan=0.0, posinf=0.0, neginf=0.0).clamp(0.0, 1.0)
@@ -7472,7 +7485,8 @@ class IntuitionisticFuzzyLoss(nn.Module):
                 mu_in = _promote_loss_tensor(mu_in)
                 nu_in = _promote_loss_tensor(nu_in)
                 pi_in = _promote_loss_tensor(pi_in)
-                assert mu_in is not None and nu_in is not None
+                if not (mu_in is not None and nu_in is not None):
+                    raise AssertionError('Internal invariant failed: mu_in is not None and nu_in is not None')
                 mu, nu, pi = self._sanitize_ifn_components(mu_in, nu_in, pi_in)
             else:
                 mu, nu, pi = self._sanitize_ifn_components(raw_mu, raw_nu, raw_pi)
@@ -7543,7 +7557,8 @@ class IntuitionisticFuzzyLoss(nn.Module):
                         mm_in = _promote_loss_tensor(mm_in)
                         mn_in = _promote_loss_tensor(mn_in)
                         mp_in = _promote_loss_tensor(mp_in)
-                        assert mm_in is not None and mn_in is not None
+                        if not (mm_in is not None and mn_in is not None):
+                            raise AssertionError('Internal invariant failed: mm_in is not None and mn_in is not None')
                         m_mu, _, m_pi = self._sanitize_ifn_components(mm_in, mn_in, mp_in)
                     else:
                         m_mu, _, m_pi = self._sanitize_ifn_components(m_ifn.mu, m_ifn.nu, m_ifn.pi)
@@ -7565,12 +7580,14 @@ class IntuitionisticFuzzyLoss(nn.Module):
 
             if gate_sparsity_l1 is not None:
                 g_in = _promote_loss_tensor(gate_sparsity_l1)
-                assert g_in is not None
+                if not (g_in is not None):
+                    raise AssertionError('Internal invariant failed: g_in is not None')
                 g_clean = torch.nan_to_num(g_in, nan=0.0, posinf=1.0, neginf=0.0).clamp(0.0, 1.0)
                 loss = loss + self.lambda_sparse * g_clean
             if rough_boundary is not None:
                 rb_in = _promote_loss_tensor(rough_boundary)
-                assert rb_in is not None
+                if not (rb_in is not None):
+                    raise AssertionError('Internal invariant failed: rb_in is not None')
                 rb_clean = torch.nan_to_num(rb_in, nan=0.0, posinf=1.0, neginf=0.0).clamp(0.0, 1.0)
                 loss = loss + self.lambda_rough_bnd * rb_clean.mean()
 
@@ -7818,7 +7835,8 @@ class UnifiedDeepFuzzyModel(nn.Module):
             )
             pi_comb_use = _promote_low_prec_cached(pi_comb, dtype, {})
             ifs_prob_use = _promote_low_prec_cached(ifs_prob, dtype, {})
-            assert pi_comb_use is not None and ifs_prob_use is not None
+            if not (pi_comb_use is not None and ifs_prob_use is not None):
+                raise AssertionError('Internal invariant failed: pi_comb_use is not None and ifs_prob_use is not None')
         elif lp_dt is not None and lp_dt != dtype:
             mod_net_scores = torch.cat(
                 [mu_list[m] - nu_list[m] for m in range(self.num_modalities)], dim=-1

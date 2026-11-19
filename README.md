@@ -152,6 +152,24 @@ A single baseline eGFR measurement does not establish the 3-month chronicity req
 
 ## 🧪 Reproducing Unit Tests & Multi-Dataset Benchmarks
 
+The v0.2.4 supplementary audits cover comparator fidelity, symmetric missingness exposure,
+inner-fold referral calibration, pathology adaptation ablations, and strictly inductive
+TCGA feature selection:
+
+- `benchmarks/run_v024_adni_fusion_exposure_ecdf_audit.py` produces
+  `results/v024_adni_fusion_exposure_ecdf_audit.json`.
+- `benchmarks/run_v024_pathology_tta_ablation_audit.py` produces
+  `results/v024_pathology_tta_ablation_audit.json`.
+- `benchmarks/run_v024_tcga_inductive_nonlung_owa_audit.py` produces
+  `results/v024_tcga_inductive_nonlung_owa_audit.json`.
+- `python3 benchmarks/verify_v024_table_parity.py` checks the frozen main tables and all
+  numeric cells in the three supplementary tables against the aggregate JSON files.
+
+The audit scripts require the relevant credentialed data and feature caches; the parity
+verifier uses only the standard library and released aggregate results. The local
+`results/v024_adni_oof_arrays.npz` contains participant-level outputs and is restricted by
+the ADNI Data Use Agreement.
+
 ```bash
 # Install editable package with dev/test dependencies (includes pytest)
 .venv/bin/pip install -e ".[dev]"
@@ -207,7 +225,7 @@ The `paper/` directory provides **three mutually exclusive single-submission LaT
 ```text
 Fuzzy/
 ├── deepfuzzy/
-│   ├── __init__.py                     # Public API exports (v0.2.3)
+│   ├── __init__.py                     # Public API exports (v0.2.4)
 │   ├── operators.py                    # 5 core differentiable fuzzy/granular operators + UnifiedDeepFuzzyModel
 │   ├── baselines.py                    # Neural/evidential/fuzzy comparators (incl. QMF (adapted), RCML, DrFuse, DDEF, FUML)
 │   ├── missing_benchmark.py            # 2^M - 1 combinatorial & stress-curve missing-modality evaluator

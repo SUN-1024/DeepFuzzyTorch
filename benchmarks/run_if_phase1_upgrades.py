@@ -197,7 +197,8 @@ class _GBDTWorkerClient:
 
     def _call(self, payload: Any) -> Any:
         data = pickle.dumps(payload, protocol=pickle.HIGHEST_PROTOCOL)
-        assert self.proc.stdin is not None and self.proc.stdout is not None
+        if self.proc.stdin is None or self.proc.stdout is None:
+            raise RuntimeError("Worker subprocess stdio streams are unavailable")
         self.proc.stdin.write(struct.pack("!I", len(data)) + data)
         self.proc.stdin.flush()
         hdr = bytearray()
@@ -537,7 +538,8 @@ def main() -> None:
         )
         reducer_f.fit(X_mri_tr_s[0], y1[tr_idx], feature_names=mri1_cols, device="cpu")
         sel_mri_idx = reducer_f.selected_indices_[:24]
-        assert list(map(int, sel_mri_idx)) == archived_sel_indices[fold_idx], f"Fold {fold_idx} MRI idx drift"
+        if list(map(int, sel_mri_idx)) != archived_sel_indices[fold_idx]:
+            raise RuntimeError(f"Fold {fold_idx} MRI idx drift")
 
         X_tr_raw = [X1_raw[0][tr_idx][:, sel_mri_idx], X1_raw[1][tr_idx], X1_raw[2][tr_idx], X1_raw[3][tr_idx]]
         X_va_raw = [X1_raw[0][va_idx][:, sel_mri_idx], X1_raw[1][va_idx], X1_raw[2][va_idx], X1_raw[3][va_idx]]
@@ -667,16 +669,18 @@ def main() -> None:
         )
 
     # Assert deterministic replay (within tiny float32 BLAS/OpenMP reduction ULP) & restore archived NPZ arrays
-    assert np.array_equal(fids_c1, npz_data["adni1_fold_ids"].astype(np.int32)), "C1 fold_id mismatch"
+    if not np.array_equal(fids_c1, npz_data["adni1_fold_ids"].astype(np.int32)):
+        raise RuntimeError("C1 fold_id mismatch")
     for m_key in existing_model_names + list(ablation_configs.keys()):
         if f"adni1_prob_{m_key}" in npz_data:
             p_arch = npz_data[f"adni1_prob_{m_key}"].astype(np.float32)
             diff_p = float(np.max(np.abs(oof_c1_probs[m_key] - p_arch)))
             au_new = compute_binary_metrics(oof_c1_probs[m_key], y1)["auroc"]
             au_old = compute_binary_metrics(p_arch, y1)["auroc"]
-            assert diff_p < 5e-3 and abs(au_new - au_old) < 5e-4, (
-                f"C1 replay mismatch on {m_key}: diff_p={diff_p}, au_diff={abs(au_new - au_old)}"
-            )
+            if not (diff_p < 5e-3 and abs(au_new - au_old) < 5e-4):
+                raise RuntimeError(
+                    f"C1 replay mismatch on {m_key}: diff_p={diff_p}, au_diff={abs(au_new - au_old)}"
+                )
             oof_c1_probs[m_key] = p_arch.copy()
             if f"adni1_hes_{m_key}" in npz_data:
                 oof_c1_hes[m_key] = npz_data[f"adni1_hes_{m_key}"].astype(np.float32).copy()
@@ -702,7 +706,8 @@ def main() -> None:
     full_val_masks_np = full_val_masks.numpy()
     complete_4mod_mask = np.all(full_val_masks_np > 0.5, axis=1)
     n_complete_4mod = int(np.sum(complete_4mod_mask))
-    assert n_complete_4mod == 854, f"Expected N_comp=854 complete 4-modality subjects, got {n_complete_4mod}"
+    if n_complete_4mod != 854:
+        raise RuntimeError(f"Expected N_comp=854 complete 4-modality subjects, got {n_complete_4mod}")
 
     def make_c1_oof_predict_fn(m_key: str) -> Callable[[List[torch.Tensor], torch.Tensor], Dict[str, torch.Tensor]]:
         ab_flags = ablation_configs.get(m_key, {})
@@ -818,8 +823,12 @@ def main() -> None:
         if k in main_table and k in complete_4mod_854_table:
             main_table[k]["complete_4mod_854_auroc"] = complete_4mod_854_table[k]["auroc"]
 
-    assert abs(main_table["DeepFuzzyTorch"]["auroc"] - 0.826973) < 5e-4
-    assert abs(complete_4mod_854_table["DeepFuzzyTorch"]["auroc"] - 0.837143) < 5e-4
+    if abs(main_table["DeepFuzzyTorch"]["auroc"] - 0.826973) >= 5e-4:
+        raise RuntimeError(f"Unexpected C1 DeepFuzzyTorch AUROC: {main_table['DeepFuzzyTorch']['auroc']}")
+    if abs(complete_4mod_854_table["DeepFuzzyTorch"]["auroc"] - 0.837143) >= 5e-4:
+        raise RuntimeError(
+            f"Unexpected complete-4mod DeepFuzzyTorch AUROC: {complete_4mod_854_table['DeepFuzzyTorch']['auroc']}"
+        )
     print(
         f"[Audit C1] DeepFuzzyTorch Full(N=1137)={main_table['DeepFuzzyTorch']['auroc']:.4f} | "
         f"SameVisit(n=924)={same_visit_table['DeepFuzzyTorch']['auroc']:.4f} | "
@@ -857,7 +866,10 @@ def main() -> None:
             rec_08["referral_curve_hes_only"]["refer_20pct"]["auroc"]
         )
 
-    assert abs(main_table["DeepFuzzyTorch"]["conflict_det_auroc_g08"] - 0.654173) < 2e-4
+    if abs(main_table["DeepFuzzyTorch"]["conflict_det_auroc_g08"] - 0.654173) >= 2e-4:
+        raise RuntimeError(
+            f"Unexpected conflict detection AUROC: {main_table['DeepFuzzyTorch']['conflict_det_auroc_g08']}"
+        )
     print(
         f"[Conflict g=0.8 DeepFuzzyTorch] Composite={main_table['DeepFuzzyTorch']['conflict_det_auroc_g08']:.4f} | "
         f"Pure C_O={main_table['DeepFuzzyTorch']['conflict_det_auroc_conflict_only_g08']:.4f} | "
@@ -935,7 +947,8 @@ def main() -> None:
     }
 
     for fold_idx, (tr_i, va_i) in enumerate(skf.split(X2_mri_full, y2)):
-        assert np.array_equal(va_i, np.where(fids_c2 == fold_idx)[0]), f"C2 fold {fold_idx} mismatch"
+        if not np.array_equal(va_i, np.where(fids_c2 == fold_idx)[0]):
+            raise RuntimeError(f"C2 fold {fold_idx} mismatch")
         X_mri_tr_all_s, _, _, _ = fit_strict_preprocessor([X2_mri_full[tr_i]], [X2_mri_full[va_i]])
         red_c2 = FuzzyRoughFeatureReducer(
             max_features=24, sigma=0.85, max_samples=4096,
@@ -1030,9 +1043,10 @@ def main() -> None:
         diff2 = float(np.max(np.abs(oof_c2_probs[m_name] - p2_arch)))
         au2_new = compute_binary_metrics(oof_c2_probs[m_name], y2)["auroc"]
         au2_old = compute_binary_metrics(p2_arch, y2)["auroc"]
-        assert diff2 < 5e-3 and abs(au2_new - au2_old) < 5e-4, (
-            f"C2 replay mismatch on {m_name}: diff2={diff2}, au_diff={abs(au2_new - au2_old)}"
-        )
+        if not (diff2 < 5e-3 and abs(au2_new - au2_old) < 5e-4):
+            raise RuntimeError(
+                f"C2 replay mismatch on {m_name}: diff2={diff2}, au_diff={abs(au2_new - au2_old)}"
+            )
         oof_c2_probs[m_name] = p2_arch.copy()
         if f"adni2_hes_{m_name}" in npz_data:
             oof_c2_hes[m_name] = npz_data[f"adni2_hes_{m_name}"].astype(np.float32).copy()
@@ -1083,7 +1097,8 @@ def main() -> None:
     c2_unique_mask = npz_data["adni2_nonoverlap_c1plasma_mask"].astype(bool)
     uniq_on_disc2 = c2_unique_mask[disc2_mask]
     y_dedup_disc = np.concatenate([y1[disc1_mask], y2[disc2_mask][uniq_on_disc2]])
-    assert len(y_dedup_disc) == 198, f"Expected n=198 deduplicated discordant patients, got {len(y_dedup_disc)}"
+    if len(y_dedup_disc) != 198:
+        raise RuntimeError(f"Expected n=198 deduplicated discordant patients, got {len(y_dedup_disc)}")
 
     rw = t2["real_world_discordance_audit"]
     for m_name in new_neural_names + tabular_names:
